@@ -1,0 +1,15 @@
+{
+  "S2": {
+    "QUERY": "USGS_EE",
+    "DOWNLOAD": "USGS_EE"
+  },
+  "S1": {},
+  "L8": {
+    "QUERY": "USGS_EE",
+    "DOWNLOAD": "USGS_EE"
+  },
+  "LOGGING": {
+    "CONSOLE": "DEBUG",
+    "FILE": "DEBUG"
+  }
+}

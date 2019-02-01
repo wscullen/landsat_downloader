@@ -1,0 +1,7 @@
+data/
+grid_files/
+test_data.zip
+grid_files.zip
+*.zip
+__pycache__/
+intersecting*
