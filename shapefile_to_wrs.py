@@ -17,6 +17,7 @@ from pathlib import Path
 import json
 import zipfile
 import argparse
+import utilities
 
 # Testing submodule functionality in git
 
@@ -42,6 +43,14 @@ def parse_args():
                         dest="shapefile", action='store',
                         type=str,
                         help='Path to the shapefile you want to determine WRS intersections with.')
+
+    parser.add_argument('-wrs_intersects',
+                        dest="wrs_intersects", action='store_true',
+                        help='Determine the WRSs that intersect the given shapefile')
+
+    parser.add_argument('-wrs_to_mgrs',
+                        dest="wrs_to_mgrs", action='store_true',
+                        help='Create a csv lookup for wrs to mgrs')
 
     arg_object = parser.parse_args()
 
@@ -644,6 +653,11 @@ if __name__ == "__main__":
 
     arg_obj = parse_args()
 
-    result = find_shapefile_wrs_intersections(arg_obj.shapefile)
+    result = None
+
+    if arg_obj.wrs_intersects:
+        result = find_shapefile_wrs_intersections(arg_obj.shapefile)
+    elif arg_obj.wrs_to_mgrs:
+        utilities.create_wrs_to_mgrs_lookup(arg_obj.shapefile)
 
     print(result)

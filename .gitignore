@@ -5,3 +5,4 @@ grid_files.zip
 *.zip
 __pycache__/
 intersecting*
+*.csv

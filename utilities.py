@@ -16,6 +16,7 @@ import os
 from pathlib import Path
 import json
 import zipfile
+import csv
 
 
 from osgeo import ogr, osr
@@ -25,6 +26,61 @@ ogr.UseExceptions()
 DATA_DIR = Path(os.path.dirname(os.path.abspath(__file__)), "grid_files")
 
 print(DATA_DIR)
+
+def create_wrs_to_mgrs_lookup(wrs_shapefile):
+    """Use the Canada only WRS shapefile to find all MGRS that overlap with each WRS
+
+    Write out to csv.
+
+    # Load canada WRS
+    # iterate over features
+    # pull geom ref from each feature
+    # call find_mgrs_intersection_large on each footprint
+    # create a tuple for each feature, add the PathRow, MGRS_List
+    # write out csv at the end
+
+    """
+
+    shapefile_driver = ogr.GetDriverByName("ESRI Shapefile")
+
+    grid_ds = shapefile_driver.Open(wrs_shapefile, 0)
+
+    layer = grid_ds.GetLayer()
+
+
+    path_row_list = []
+
+    total_features = layer.GetFeatureCount()
+
+    for idx, f in enumerate(layer):
+
+        print(f'{idx} of {total_features}')
+
+        footprint = f.GetGeometryRef().ExportToWkt()
+        pathrow = f.GetField('PR')
+
+
+        mgrs_list = find_mgrs_intersection_large(footprint)
+        print(mgrs_list)
+        mgrs_list_fine = []
+
+        mgrs_list_fine += find_mgrs_intersection_100km(footprint, mgrs_list)
+
+        print('for path row')
+        print(pathrow)
+        print(mgrs_list)
+        print(mgrs_list_fine)
+        print('\n\n')
+        path_row_list.append((str(pathrow), ' '.join(mgrs_list_fine)))
+
+    with open('wrs_to_mgrs.csv','w', newline='') as out:
+        csv_out = csv.writer(out)
+        csv_out.writerow(['pathrow','mgrs_list'])
+
+        for row in path_row_list:
+            csv_out.writerow(row)
+
+
 
 def get_usgs_detailed_metadata_field(result, field_name):
     result_list = [val['value'] for val in result['detailed_metadata'] if val['fieldName'] == field_name]
@@ -167,10 +223,6 @@ def find_mgrs_intersection_large(footprint):
 
     #         with zipfile.ZipFile(file_name, 'r') as zf:
     #             # zf.extractall('temp_unzip')
-    #             # print(zf.namelist())
-    #             # print(zf.infolist())
-
-
     #             actual_file_stem = ""
     #             for zip_info in zf.infolist():
     #                 print(zip_info.filename)
@@ -516,7 +568,7 @@ def find_wrs_intersection(footprint):
 def get_mgrs_footprint(mgrs_id):
     """Given a MGRS ID ()
     mgrs_id = ZONE NUMBER, BAND LETTER, 100km designation
-    
+
     return the WKT polygon of the zone footprint
     """
 
