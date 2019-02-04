@@ -1240,14 +1240,16 @@ class L8Downloader:
                                                          result['data']['results'],
                                                          dataset_name)
 
-            real_result_list = []
-            for product in temp_results:
-                mgrs_id = product['displayId'].split('_')[1][1:]
-                # print(mgrs_id)
-                if mgrs_id in gzd_list_100km:
-                    real_result_list.append(product)
+            # real_result_list = []
+            
+            # for product in temp_results:
+            #     mgrs_id = product['displayId'].split('_')[1][1:]
+            #     # print(mgrs_id)
+            #     if mgrs_id in gzd_list_100km:
+                    
+            #         real_result_list.append(product)
 
-            result['data']['results'] = real_result_list
+            result['data']['results'] = temp_results
 
             result_list = self.populate_result_list(result, platform_name, dataset_name, detailed=detailed)
 

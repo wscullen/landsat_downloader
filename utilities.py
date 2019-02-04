@@ -26,6 +26,12 @@ DATA_DIR = Path(os.path.dirname(os.path.abspath(__file__)), "grid_files")
 
 print(DATA_DIR)
 
+def get_usgs_detailed_metadata_field(result, field_name):
+    result_list = [val['value'] for val in result['detailed_metadata'] if val['fieldName'] == field_name]
+    if len(result_list) != 0:
+        return result_list[0]
+    else:
+        return None
 
 def find_mgrs_intersection_large(footprint):
     """ Given a WKT polygon, return the list of MGRS tiles that intersect it
@@ -385,22 +391,8 @@ def find_mgrs_intersection_100km(footprint, gzd_list):
 
     return total_mgrs_100km_list
 
-
-def find_mgrs_intersection_100km_single(footprint, gzd):
-    """
-    Given a WKT polygon and a GZD (grid zone designator)
-    return the list of 100km MGRS gzd that intersect the WKT polygon
-
-    Overview:
-    1. Based on the GZD, unzip the matching .shp and load
-    2. Run interesction check on each feature of the .shp
-    3. Save intersections to a list, the field is 100kmSQ_ID
-    4. Clean up unziped files, return list of intersecting 100kmSQ_ID's
-
-    """
-
-    polygon_geom = ogr.CreateGeometryFromWkt(footprint)
-
+def unzip_mgrs_shapefile(gzd):
+    print(gzd)
     zip_name = f'MGRS_100kmSQ_ID_{gzd}.zip'
     file_name_stem = f'MGRS_100kmSQ_ID{gzd}'
     full_zip_path = Path(DATA_DIR, 'MGRS_100kmSQ_ID', zip_name)
@@ -426,6 +418,30 @@ def find_mgrs_intersection_100km_single(footprint, gzd):
         file_name_stem = actual_file_stem
 
     file_path = Path(DATA_DIR, file_name_stem + '.shp')
+
+    return file_path
+
+def clean_data_dir():
+    for file_name in Path(DATA_DIR).iterdir():
+        if file_name.is_file():
+            os.remove(file_name)
+
+def find_mgrs_intersection_100km_single(footprint, gzd):
+    """
+    Given a WKT polygon and a GZD (grid zone designator)
+    return the list of 100km MGRS gzd that intersect the WKT polygon
+
+    Overview:
+    1. Based on the GZD, unzip the matching .shp and load
+    2. Run interesction check on each feature of the .shp
+    3. Save intersections to a list, the field is 100kmSQ_ID
+    4. Clean up unziped files, return list of intersecting 100kmSQ_ID's
+
+    """
+
+    polygon_geom = ogr.CreateGeometryFromWkt(footprint)
+
+    file_path = unzip_mgrs_shapefile(gzd)
 
     # 2. Load the shp file and run intersection check on each feature
     shapefile_driver = ogr.GetDriverByName("ESRI Shapefile")
@@ -456,12 +472,90 @@ def find_mgrs_intersection_100km_single(footprint, gzd):
     # all done!
     grid_ds = None
 
-    # clean up
-    for file_name in Path(DATA_DIR).iterdir():
-        if file_name.is_file():
-            os.remove(file_name)
+    clean_data_dir()
 
     return intersect_list
+
+def find_wrs_intersection(footprint):
+    """Find all WRS path rows that the given footprint intersects with"""
+    polygon_geom = ogr.CreateGeometryFromWkt(footprint)
+
+    file_path = Path(DATA_DIR, 'WRS2_descending', 'WRS2_descending.shp')
+
+    # 2. Load the shp file and run intersection check on each feature
+    shapefile_driver = ogr.GetDriverByName("ESRI Shapefile")
+
+    grid_ds = shapefile_driver.Open(str(file_path), 0)
+
+    layer = grid_ds.GetLayer()
+
+    # transform coords from local UTM proj to lat long
+    # sourceSR = layer.GetSpatialRef()
+    # targetSR = osr.SpatialReference()
+    # targetSR.ImportFromEPSG(4326) # WGS84
+    # coordTrans = osr.CoordinateTransformation(sourceSR, targetSR)
+
+    intersect_list = []
+
+    for f in layer:
+        geom = f.GetGeometryRef()
+        # geom.Transform(coordTrans)
+
+        intersect_result = geom.Intersection(polygon_geom)
+
+        if not intersect_result.IsEmpty():
+            print("FOUND INTERSECT")
+            print(f.GetField('PR'))
+            intersect_list.append((f.GetField("PR")[:3], f.GetField("PR")[3:]))
+
+    # all done!
+    grid_ds = None
+
+    return intersect_list
+
+def get_mgrs_footprint(mgrs_id):
+    """Given a MGRS ID ()
+    mgrs_id = ZONE NUMBER, BAND LETTER, 100km designation
+    
+    return the WKT polygon of the zone footprint
+    """
+
+    gzd = mgrs_id[:3]
+
+    mgrs_100km_gzd = mgrs_id[3:]
+    print(gzd)
+    print(mgrs_100km_gzd)
+
+    file_path = unzip_mgrs_shapefile(gzd)
+
+    shapefile_driver = ogr.GetDriverByName("ESRI Shapefile")
+
+    grid_ds = shapefile_driver.Open(str(file_path), 0)
+
+    layer = grid_ds.GetLayer()
+
+    # transform coords from local UTM proj to lat long
+    sourceSR = layer.GetSpatialRef()
+    targetSR = osr.SpatialReference()
+    targetSR.ImportFromEPSG(4326) # WGS84
+    coordTrans = osr.CoordinateTransformation(sourceSR, targetSR)
+
+    intersect_list = []
+    wkt_footprint = None
+    for f in layer:
+
+        if f.GetField('100kmSQ_ID') == mgrs_100km_gzd:
+            geom = f.GetGeometryRef()
+            geom.Transform(coordTrans)
+            wkt_footprint = geom.ExportToWkt()
+
+    # all done!
+    grid_ds = None
+
+    clean_data_dir()
+
+    return wkt_footprint
+
 
 
 def filter_by_footprint(footprint, list_of_results, dataset_name):
