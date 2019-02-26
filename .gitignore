@@ -6,3 +6,4 @@ grid_files.zip
 __pycache__/
 intersecting*
 *.csv
+.vscode/
