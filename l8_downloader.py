@@ -38,31 +38,7 @@ module_level_variable1 : int
     following the variable.
 
     Either form is acceptable, but the two should not be mixed. Choose
-    one convdef timeit(method):
-    def timed(*args, **kw):
-        ts = time.time()
-        result = method(*args, **kw)
-        te = time.time()
-        if 'log_time' in kw:
-            def timeit(method):
-        def timed(*args, **kw):
-        ts = time.time()
-        result = method(*args, **kw)
-        te = time.time()
-        if 'log_time' in kw:
-            name = kw.get('log_name', method.__name__.upper())
-            kw['log_time'][name] = int((te - ts) * 1000)
-        else:
-            print '%r  %2.2f ms' % \
-                  (method.__name__, (te - ts) * 1000)
-        return result
-    return timedname = kw.get('log_name', method.__name__.upper())
-            kw['log_time'][name] = int((te - ts) * 1000)
-        else:
-            print '%r  %2.2f ms' % \
-                  (method.__name__, (te - ts) * 1000)
-        return result
-    return timedention to document module level variables and be consistent
+    one convention to document module level variables and be consistent
     with it.
 
 
@@ -166,7 +142,7 @@ class L8Downloader:
         """ Read the .json config file to get the user name and password"""
 
         # self.logger.debug('Attempting a direct login')
-        print(f'config path: {self.path_to_config}')
+        # print(f'config path: {self.path_to_config}')
         auth_file = os.path.join(self.path_to_config, 'authcache.json')
         now = time.time()
 
@@ -452,6 +428,7 @@ class L8Downloader:
         else:
             print('There was a problem getting datasets, status_code = {}, errorCode = {}, error = {}'.format(r.status_code, result['errorCode'], result['error']))
 
+
     def list_results(self, result, key_list, name_of_api_call, write_to_csv=False):
 
         def shorten_string(string_to_shorten):
@@ -501,11 +478,8 @@ class L8Downloader:
 
         r = requests.post(dataset_url, payload, timeout=60)
 
-        print(data)
-
         result = r.json()
-        print(r)
-        print(result)
+        # print(result)
 
         if r.status_code == 200 and result['errorCode'] == None:
             return result['data']
@@ -518,16 +492,11 @@ class L8Downloader:
         """
 
         result_list = []
-
         if platform_name == 'Landsat-8':
-
-            # detailed_metadata = self.search_scene_metadata(dataset_name, [product_dict['entity_id']])[0]
 
             for r in result['data']['results']:
                 product_dict = {}
                 product_dict['entity_id'] = r['entityId']
-
-                # product_dict['detailed_metadata'] = detailed_metadata
 
                 product_dict['api_source'] = 'usgs_ee'
                 product_dict['download_source'] = None
@@ -994,7 +963,6 @@ class L8Downloader:
             cloud_maximum_percent = query_dict['cloud_percent']
             converted_cloud_max = math.floor(cloud_maximum_percent / 10) - 1
             print(converted_cloud_max)
-
             # build out product list filter
             child_filter_list = []
             for gzd_100km in tile_list:
@@ -1020,14 +988,7 @@ class L8Downloader:
         dataset_url = self.url_post_string.format("search")
         all_results = []
 
-        # total_num = self.get_total_products(data)
-        # if total_num == -1:
-        #     print('something went wrong, got no results')
-        #     return []
-
-        # data['maxResults'] = total_num
-        data['maxResults'] = 5000
-        # print(total_num)
+        data['maxResults'] = 10000
         payload = {
             "jsonRequest": json.dumps(data)
         }
@@ -1053,10 +1014,6 @@ class L8Downloader:
                                             'search_for_products', write_to_csv=write_to_csv)
 
             print(len(result))
-
-            # Use to save out intermediate results for testing purposes
-            # with open('raw_results.json', 'w') as outfile:
-            #     json.dump(result, outfile)
 
             result_list = self.populate_result_list(result, platform_name, dataset_name, detailed=detailed)
 
@@ -1241,12 +1198,12 @@ class L8Downloader:
                                                          dataset_name)
 
             # real_result_list = []
-            
+
             # for product in temp_results:
             #     mgrs_id = product['displayId'].split('_')[1][1:]
             #     # print(mgrs_id)
             #     if mgrs_id in gzd_list_100km:
-                    
+
             #         real_result_list.append(product)
 
             result['data']['results'] = temp_results
@@ -1365,6 +1322,7 @@ class L8Downloader:
                 result_list.append(product_dict)
 
         return result_list
+
 
     def search_scene_metadata(self, dataset_name, entity_id_list, write_to_csv=False):
         """
@@ -1671,12 +1629,12 @@ class L8Downloader:
             elif product_type in [ 'FR_THERM', 'FR_QB', 'FR_REFL']:
                 file_name = product_dict['name'] + '_{}.jpg'.format(product_type)
             elif product_type in ['STANDARD']:
-                file_name = product_dict['name'] + '_{}.tar.gz'.format(product_type)
+                file_name = product_dict['name'] + '.tar.gz'
 
         elif product_dict['platform_name'] == 'Sentinel-2':
 
             if product_type in ['STANDARD']:
-                file_name = product_dict['name'] + '_{}.zip'.format(product_type)
+                file_name = product_dict['name'] + '.zip'
             elif product_type in ['FRB']:
                 file_name = product_dict['name'] + '_{}.jpg'.format(product_type)
 
@@ -1712,17 +1670,18 @@ class L8Downloader:
     # -- Bulk Downloader API functions ------------------------------------------
 
     def bulk_submit_order(self, product_list):
+        """
+        ["LC08_L1TP_008027_20170501_20170515_01_T1", "LC08_L1TP_008028_20170501_20170515_01_T1", "LC08_L1TP_009027_20170508_20170515_01_T2"]
+        ["L1C_T20TLS_A009746_20170504T151653", "L1C_T20TLR_A009746_20170504T151653", "L1C_T20TMS_A009746_20170504T151653"]
 
-        # ["LC08_L1TP_008027_20170501_20170515_01_T1", "LC08_L1TP_008028_20170501_20170515_01_T1", "LC08_L1TP_009027_20170508_20170515_01_T2"]
-        # ["L1C_T20TLS_A009746_20170504T151653", "L1C_T20TLR_A009746_20170504T151653", "L1C_T20TMS_A009746_20170504T151653"]
-
-        # datapayload = {
-        #     "format": "GTIFF",
-        #     "note": "Shaun's Order!!",
-        #     "SENTINEL_2A": {
-        #         "inputs": ['2483642'],
-        #     }
-        # }
+        datapayload = {
+            "format": "GTIFF",
+            "note": "Shaun's Order!!",
+            "SENTINEL_2A": {
+                "inputs": ['2483642'],
+            }
+        }
+        """
 
         username = self.username
         password = self.password
@@ -1779,7 +1738,6 @@ class L8Downloader:
         """ See if there are outstanding orders that the user should download
             Useful to do before the user starts another order
         """
-
         username = self.username
         password = self.password
         r = requests.get(url='https://espa.cr.usgs.gov/api/v1/list-orders', auth=(username, password))
@@ -1804,8 +1762,6 @@ class L8Downloader:
             return False
 
     def check_order_status(self, order_id):
-
-
         username = self.username
         password = self.password
         r = requests.get(url='https://espa.cr.usgs.gov/api/v1/order-status/{}'.format(order_id), auth=(username, password))
@@ -1871,7 +1827,6 @@ class L8Downloader:
         r = requests.get(url='https://espa.cr.usgs.gov/api/v1/item-status/{}'.format(order_id), auth=(username, password))
 
         response = r.json()
-
 
         if r.status_code in [200, 201]:
             # fill in download code here for each item
