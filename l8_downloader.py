@@ -104,11 +104,6 @@ class L8Downloader:
         self.username = os.environ.get('USGS_EE_USER')
         self.password = os.environ.get('USGS_EE_PASS')
 
-        print(self.username)
-        print(self.password)
-
-        print(self.username and self.password)
-
         if not (bool(self.username) and bool(self.password)):
             print('Missing auth env vars, MISSING USERNAME OR PASSWORD')
             print('Set the appropriate auth values in USGS_EE_USERNAME and USGS_EE_PASSWORD')
