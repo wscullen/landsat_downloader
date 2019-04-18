@@ -58,7 +58,7 @@ import time
 import shutil
 import sys
 import tqdm
-from runningtime import RunningTime
+from .runningtime import RunningTime
 from multiprocessing import Pool
 from threading import Thread
 from tabulate import tabulate
@@ -72,8 +72,8 @@ from geomet import wkt
 
 from . import utilities
 
-from transfer_monitor import TransferMonitor
-from utils import TaskStatus
+from .transfer_monitor import TransferMonitor
+from .utils import TaskStatus
 
 class L8Downloader:
 

@@ -7,3 +7,5 @@ __pycache__/
 intersecting*
 *.csv
 .vscode/
+config.json
+authcache.json
