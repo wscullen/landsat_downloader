@@ -9,3 +9,4 @@ intersecting*
 .vscode/
 config.json
 authcache.json
+test/test_data/*

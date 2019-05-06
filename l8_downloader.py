@@ -1453,6 +1453,9 @@ class L8Downloader:
 
         result = r.json()
 
+        print(result)
+        print(r.status_code)
+
         if r.status_code == 200 and result['errorCode'] == None:
             if not auth_token:
                 self.update_auth_time()
@@ -1615,6 +1618,10 @@ class L8Downloader:
             the download url is temporary and should be downloaded immediately
 
         """
+        if not auth_token:
+            self.check_auth()
+            auth_token = self.auth_token
+
         print('Downloading single product with L8Downloader')
         file_name = ''
 
@@ -1636,12 +1643,20 @@ class L8Downloader:
         if directory:
             file_name = os.path.join(directory, file_name)
 
+        print(product_dict)
+        print(product_type)
+        print(directory)
+        print(auth_token)
+        print(file_name)
+
 
         if not os.path.isfile(file_name):
             download_url = self.get_download_urls(product_dict['dataset_name'],
                                                  [product_dict['entity_id']],
                                                  [product_type],
                                                  auth_token=auth_token)
+
+            print(download_url)
 
             if download_url:
                 print('found download url okay, downloading file...')
@@ -1662,6 +1677,10 @@ class L8Downloader:
             return TaskStatus(True, 'Product to be downloaded already exists.', file_name)
 
 
+
+
+
+    # ---------------------------------------------------------------------------
     # -- Bulk Downloader API functions ------------------------------------------
 
     def bulk_submit_order(self, product_list):
