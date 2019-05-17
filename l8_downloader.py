@@ -106,7 +106,7 @@ class L8Downloader:
 
         if not (bool(self.username) and bool(self.password)):
             print('Missing auth env vars, MISSING USERNAME OR PASSWORD')
-            print('Set the appropriate auth values in USGS_EE_USERNAME and USGS_EE_PASSWORD')
+            print('Set the appropriate auth values in USGS_EE_USER and USGS_EE_PASS')
             raise('Missing critical auth env vars.')
 
         # # create logger
