@@ -19,3 +19,6 @@ Shapefiles for the WRS and MGRS grids are required to lookup and convert between
 [landsat_downloader_data.zip](https://drive.google.com/file/d/14lqY25kH1sU2kVYO6yR6ASPrDWW3fQ3J/view?usp=sharing)
 
 `grid_files` and `data` directories goes under the main project directory, `test_data` directory goes under the `test` directory in the main project directory.
+
+## Env Vars for USGS EE Auth
+Make sure to set USGS_EE_USERNAME and USGS_EE_PASSWORD to the usernamd and password that you use to access USGS EE.
