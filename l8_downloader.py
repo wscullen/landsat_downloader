@@ -600,6 +600,7 @@ class L8Downloader:
                 result_list.append(product_dict)
 
         if detailed:
+            print(result_list)
             # use scene search to get the detailed metadat fields
             result_list = self.fill_detailed_metadata(result_list)
 
@@ -944,7 +945,71 @@ class L8Downloader:
 
         if dataset_name == 'LANDSAT_8_C1':
             platform_name = "Landsat-8"
+            cloud_maximum_percent = query_dict['cloud_percent']
+            converted_cloud_max = int(math.ceil(cloud_maximum_percent / 10.0)) * 10
+            print(converted_cloud_max)
+            # build out product list filter
+            child_filter_list = []
+            for pathrow in tile_list:
+                print(pathrow[:3])
+                print(pathrow[3:])
+                filter_dict_path = {
+                    "filterType": "value",
+                    "fieldId": 20514,
+                    "value": ' ' + pathrow[:3],
+                    "operand": "="
+                }
 
+                filter_dict_row = {
+                    "filterType": "value",
+                    "fieldId": 20516,
+                    "value": ' ' + pathrow[3:],
+                    "operand": "="
+                }
+
+                filter_pathrow = {
+                    "filterType": "and",
+                    "childFilters": [
+                        filter_dict_path,
+                        filter_dict_row
+                    ]
+                }
+
+                child_filter_list.append(filter_pathrow)
+
+
+            data["additionalCriteria"] = {
+                "filterType": "and",
+                "childFilters": [
+                    {"filterType":"between","fieldId":20522,"firstValue":"0","secondValue":str(converted_cloud_max)},
+                    {"filterType": "or",
+                        "childFilters": child_filter_list
+                    }
+                ]
+            }
+                # "filterType": "and",
+                # "childFilters": [
+
+                            # },
+                            # {
+                            #     "filterType": "value",
+                            #     "fieldId": 20516,
+                            #     "value": " 025",
+                            #     "operand": "like"
+                            # }
+
+                        #     filter_pathrow = {
+                        #         "filterType": "and",
+                        #         "childFilters": [
+                        #             filter_dict_path,
+                        #             filter_dict_row
+                        #         ]
+                        #     }
+
+                        #     child_filter_list.append(filter_pathrow)
+                    # #
+            #     ]
+            # }
             # TODO: Fix this later
             # data["additionalCriteria"] = {
             #     "filterType": "and",
@@ -987,6 +1052,8 @@ class L8Downloader:
         payload = {
             "jsonRequest": json.dumps(data)
         }
+
+        print(payload)
         time.sleep(0.25)
         r = requests.post(dataset_url, payload, timeout=240)
         self.logger.debug(r)
@@ -1009,6 +1076,7 @@ class L8Downloader:
                                             'search_for_products', write_to_csv=write_to_csv)
 
             print(len(result))
+            print(result)
 
             result_list = self.populate_result_list(result, platform_name, dataset_name, detailed=detailed)
 
@@ -1221,10 +1289,11 @@ class L8Downloader:
 
         logging.info('populating detailed metadata for each entity')
         result_list = []
+        print(product_list)
         detailed_metadata_list = self.search_scene_metadata(product_list[0]['dataset_name'], [r['entity_id'] for r in product_list])
+        print(detailed_metadata_list)
 
         for r in product_list:
-            detailed_metadata = [md for md in detailed_metadata_list if md['entityId'] == r['entity_id']][0]['metadataFields']
             if r['platform_name'] == 'Landsat-8':
                 product_dict = dict(r)
                 # start time = '2017:135:18:29:18.4577340'
@@ -1232,6 +1301,17 @@ class L8Downloader:
                 # Iterate through metadata list, find the field, convert to datetime obj,
                 # select the first one
                 # print(r)
+
+
+                detailed_metadata = [md for md in detailed_metadata_list if md['entityId'] == r['entity_id']][0]['metadataFields']
+                product_dict['detailed_metadata'] = detailed_metadata
+
+                utm_zone = [r['value'] for r in product_dict['detailed_metadata'] if r['fieldName'] == 'UTM Zone'][0]
+                center_latitude = [r['value'] for r in product_dict['detailed_metadata'] if r['fieldName'] == 'Center Latitude'][0]
+                north_south = center_latitude[-1]
+                proj_start = '326' if north_south == 'N' else '327'
+                product_dict['epsg_code'] = proj_start + utm_zone
+
                 product_dict['vendor_name'] = r['name']
                 product_dict['acquisition_start'] = next((datetime.strptime(field['value'][:-2], '%Y:%j:%H:%M:%S.%f')
                                                         for field in detailed_metadata
@@ -1261,6 +1341,8 @@ class L8Downloader:
                                                         for field in detailed_metadata
                                                             if field['fieldName'] == 'Sensor Identifier'), None)
 
+                product_dict['sat_name'] = 'LANDSAT8'
+
 
                 result_list.append(product_dict)
 
@@ -1271,6 +1353,8 @@ class L8Downloader:
 
                 detailed_metadata = [md for md in detailed_metadata_list if md['entityId'] == r['entity_id']][0]['metadataFields']
                 product_dict['detailed_metadata'] = detailed_metadata
+
+                product_dict['epsg_code'] = [r['value'] for r in product_dict['detailed_metadata'] if r['fieldName'] == 'EPSG Code'][0]
 
                 # start time = '2017:135:18:29:18.4577340'
                 # datetime.strptime('Jun 1 2005  1:33PM', '%Y:%j:%H:%M:%S.%f')
@@ -1296,7 +1380,7 @@ class L8Downloader:
                                                             if field['fieldName'] == 'Tile Number'), None)
                 product_dict['api_source'] = 'usgs_ee'
 
-                product_dict['sat_name'] = [val['value'] for val in detailed_metadata if val['fieldName'] == 'Platform'][0]
+                product_dict['sat_name'] = 'Sentinel2'
 
                 # Have to a bunch of conversions here becuase the usgs product vendor id does not match the MGRS
                 # of the other properties
