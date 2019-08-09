@@ -1649,6 +1649,8 @@ class L8Downloader:
         print(auth_token)
         print(file_name)
 
+        print(os.path.isfile(file_name))
+
 
         if not os.path.isfile(file_name):
             download_url = self.get_download_urls(product_dict['dataset_name'],
