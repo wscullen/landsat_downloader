@@ -1,4 +1,7 @@
 data/
+data
+grid_files
+test/test_data
 grid_files/
 test_data.zip
 grid_files.zip
