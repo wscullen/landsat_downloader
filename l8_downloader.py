@@ -757,8 +757,6 @@ class L8Downloader:
 
         time.sleep(0.25)
         r = requests.post(dataset_url, payload, timeout=300)
-        # print(r)
-
 
         if r.status_code == 200:
             result = r.json()
@@ -1581,7 +1579,7 @@ class L8Downloader:
         # self.check_auth() Since auth is baked into the url passed back from get
         # download url, the auth check is unnecessary
         print('Trying to download the file')
-        r = requests.get(url, stream=True)
+        r = requests.get(url, stream=True, timeout=60*60)
         print(r.status_code)
         if not os.path.isfile(filename):
             try:
