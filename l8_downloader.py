@@ -607,7 +607,7 @@ class L8Downloader:
 
         return result_list
 
-    def search_for_products_by_name(self, dataset_name, product_name_list, query_dict, detailed=False, just_entity_ids=False, write_to_csv=False):
+    def search_for_products_by_name(self, dataset_name, product_name_list, query_dict, detailed=False, just_entity_ids=False, write_to_csv=False, call_count=0):
         """
             example route /search
 
@@ -758,32 +758,50 @@ class L8Downloader:
         time.sleep(0.25)
         r = requests.post(dataset_url, payload, timeout=300)
         # print(r)
-        result = r.json()
 
-        if r.status_code == 200 and result['errorCode'] == None:
-            self.update_auth_time()
-            if self.verbose:
-                self.list_results(result['data']['results'],
-                                            ['acquisitionDate',
-                                            'spatialFootprint',
-                                            'browseUrl',
-                                            'downloadUrl',
-                                            'entityId',
-                                            'metadataUrl',
-                                            'summary',
-                                            'bulkOrdered',
-                                            'ordered'
-                                            ],
-                                            'search_for_products', write_to_csv=write_to_csv)
 
-            result_list = self.populate_result_list(result, platform_name, dataset_name, detailed=detailed)
+        if r.status_code == 200:
+            result = r.json()
 
-            if just_entity_ids:
-                return [r['entity_id'] for r in result_list]
-            else:
-                return result_list
+            if result['errorCode'] == None:
+                self.update_auth_time()
+                if self.verbose:
+                    self.list_results(result['data']['results'],
+                                                ['acquisitionDate',
+                                                'spatialFootprint',
+                                                'browseUrl',
+                                                'downloadUrl',
+                                                'entityId',
+                                                'metadataUrl',
+                                                'summary',
+                                                'bulkOrdered',
+                                                'ordered'
+                                                ],
+                                                'search_for_products', write_to_csv=write_to_csv)
+
+                result_list = self.populate_result_list(result, platform_name, dataset_name, detailed=detailed)
+
+                if just_entity_ids:
+                    return [r['entity_id'] for r in result_list]
+                else:
+                    return result_list
+
+            elif result['errorCode'] == 'RATE_LIMIT':
+                print('API access is denied because of a RATE LIMIT issue. Waiting for 5 mins and calling again.')
+                print(f'Current retry count at {call_count}')
+
+                if call_count > self.max_attempts:
+                    print('Max retries exceeded. Giving up on current task')
+                    return []
+
+                time.sleep(60 * 5)
+                call_count += 1
+
+                self.search_for_products_by_name(dataset_name, product_name_list, query_dict, call_count=call_count)
+
         else:
             print('There was a problem getting products, status_code = {}, errorCode = {}, error = {}'.format(r.status_code, result['errorCode'], result['error']))
+            return []
 
     def search_for_products(self, dataset_name, polygon, query_dict, detailed=False, just_entity_ids=False, write_to_csv=False):
         """
