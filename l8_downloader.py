@@ -176,10 +176,12 @@ class L8Downloader:
                 "jsonRequest": json.dumps(data)
             }
 
-            r = requests.post(login_url, payload)
-            # print('auth result: ')
-            # print(r)
-
+            try:
+                r = requests.post(login_url, payload)
+                # print('auth result: ')
+                # print(r)
+            except BaseException as e:
+                print(e)
 
             if r.status_code == 200:
                 result = r.json()
@@ -1055,37 +1057,42 @@ class L8Downloader:
 
         print(payload)
         time.sleep(0.25)
-        r = requests.post(dataset_url, payload, timeout=240)
-        self.logger.debug(r)
-        result = r.json()
+        try:
+            r = requests.post(dataset_url, payload, timeout=240)
 
-        if r.status_code == 200 and result['errorCode'] == None:
-            self.update_auth_time()
-            if self.verbose:
-                self.list_results(result['data']['results'],
-                                            ['acquisitionDate',
-                                            'spatialFootprint',
-                                            'browseUrl',
-                                            'downloadUrl',
-                                            'entityId',
-                                            'metadataUrl',
-                                            'summary',
-                                            'bulkOrdered',
-                                            'ordered'
-                                            ],
-                                            'search_for_products', write_to_csv=write_to_csv)
-
-            print(len(result))
-            print(result)
-
-            result_list = self.populate_result_list(result, platform_name, dataset_name, detailed=detailed)
-
-            if just_entity_ids:
-                return [r['entity_id'] for r in result_list]
-            else:
-                return result_list
+        except BaseException as e:
+            print(e)
         else:
-            print('There was a problem getting products, status_code = {}, errorCode = {}, error = {}'.format(r.status_code, result['errorCode'], result['error']))
+            self.logger.debug(r)
+            result = r.json()
+
+            if r.status_code == 200 and result['errorCode'] == None:
+                self.update_auth_time()
+                if self.verbose:
+                    self.list_results(result['data']['results'],
+                                                ['acquisitionDate',
+                                                'spatialFootprint',
+                                                'browseUrl',
+                                                'downloadUrl',
+                                                'entityId',
+                                                'metadataUrl',
+                                                'summary',
+                                                'bulkOrdered',
+                                                'ordered'
+                                                ],
+                                                'search_for_products', write_to_csv=write_to_csv)
+
+                print(len(result))
+                print(result)
+
+                result_list = self.populate_result_list(result, platform_name, dataset_name, detailed=detailed)
+
+                if just_entity_ids:
+                    return [r['entity_id'] for r in result_list]
+                else:
+                    return result_list
+            else:
+                print('There was a problem getting products, status_code = {}, errorCode = {}, error = {}'.format(r.status_code, result['errorCode'], result['error']))
 
 
     def search_for_products_polygon_to_tiles(self,
