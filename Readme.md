@@ -12,6 +12,13 @@ Generate a WRS intersection with arbirtary shapefile:
 Generate a csv lookup from WRS to MGRS:
 `python shapefile_to_wrs.py -shapefile ./data/intersecting_wrstiles.shp -wrs_to_mgrs`
 
+## Install GDAL
+
+Make sure GDAL 2.X is installed on the system, and then while in your pipenv environment, run:
+```
+pip install --global-option=build_ext --global-option="-I/usr/include/gdal" GDAL==`gdal-config --version`
+```
+
 ## Required Data Files
 
 Shapefiles for the WRS and MGRS grids are required to lookup and convert between the two systems. Download the files from here:
