@@ -9,6 +9,10 @@ pycodestyle = "*"
 
 [packages]
 pylint = "*"
+requests = "*"
+tqdm = "*"
+tabulate = "*"
+geomet = "*"
 
 [requires]
 python_version = "3.7"

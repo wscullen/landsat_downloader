@@ -13,3 +13,5 @@ intersecting*
 config.json
 authcache.json
 test/test_data/*
+.env
+Pipfile.lock
