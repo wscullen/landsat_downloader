@@ -1,0 +1,15 @@
+data/
+data
+grid_files
+test/test_data
+grid_files/
+test_data.zip
+grid_files.zip
+*.zip
+__pycache__/
+intersecting*
+*.csv
+.vscode/
+config.json
+authcache.json
+test/test_data/*
