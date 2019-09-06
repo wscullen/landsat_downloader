@@ -19,6 +19,10 @@ Make sure GDAL 2.X is installed on the system, and then while in your pipenv env
 pip install --global-option=build_ext --global-option="-I/usr/include/gdal" GDAL==`gdal-config --version`
 ```
 
+## Install Other Requirements
+
+You can use the included Pipfile to install the rest of the requirements after GDAL, run it with `pipenv install`
+
 ## Required Data Files
 
 Shapefiles for the WRS and MGRS grids are required to lookup and convert between the two systems. Download the files from here:
