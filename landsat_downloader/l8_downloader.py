@@ -712,6 +712,10 @@ class L8Downloader:
                         "value": converted_product_name,
                         "operand": "like"
                     }
+
+                    print(product_name[:27])
+                    print(converted_product_name)
+
                     child_filter_list.append({
                         "filterType": "and",
                         "childFilters": [
@@ -798,7 +802,9 @@ class L8Downloader:
                 call_count += 1
 
                 self.search_for_products_by_name(dataset_name, product_name_list, query_dict, call_count=call_count)
-
+            else:
+                print('There was a problem getting products, status_code = {}, errorCode = {}, error = {}'.format(r.status_code, result['errorCode'], result['error']))
+                return []
         else:
             print('There was a problem getting products, status_code = {}, errorCode = {}, error = {}'.format(r.status_code, result['errorCode'], result['error']))
             return []
