@@ -995,7 +995,7 @@ class L8Downloader:
 
                 child_filter_list.append(filter_pathrow)
 
-
+            # {'fieldId': 20510, 'name': 'Collection Category', 'fieldLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#collection_category', 'valueList': [{'value': None, 'name': 'All'}, {'value': 'T1', 'name': 'Tier 1'}, {'value': 'T2', 'name': 'Tier 2'}, {'value': 'RT', 'name': 'Real-Time'}]}, 
             data["additionalCriteria"] = {
                 "filterType": "and",
                 "childFilters": [
@@ -1005,28 +1005,25 @@ class L8Downloader:
                     }
                 ]
             }
-                # "filterType": "and",
-                # "childFilters": [
+            
+            if 'collection_category' in query_dict.keys():
+                collection_filter = {
+                    "filterType": "or",
+                    "childFilters": []
+                }
 
-                            # },
-                            # {
-                            #     "filterType": "value",
-                            #     "fieldId": 20516,
-                            #     "value": " 025",
-                            #     "operand": "like"
-                            # }
+                for collection in query_dict['collection_category']:
+                    value_filter = {
+                        "filterType": "value",
+                        "fieldId": 20510,
+                        "value": collection,
+                        "operand": "like"
+                    }
 
-                        #     filter_pathrow = {
-                        #         "filterType": "and",
-                        #         "childFilters": [
-                        #             filter_dict_path,
-                        #             filter_dict_row
-                        #         ]
-                        #     }
+                    collection_filter['childFilters'].append(value_filter)
+                
+                data["additionalCriteria"]["childFilters"].append(collection_filter)
 
-                        #     child_filter_list.append(filter_pathrow)
-                    # #
-            #     ]
             # }
             # TODO: Fix this later
             # data["additionalCriteria"] = {
