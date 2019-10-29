@@ -15,3 +15,4 @@ authcache.json
 test/test_data/*
 .env
 Pipfile.lock
+*.pyc

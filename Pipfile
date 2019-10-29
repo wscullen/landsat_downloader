@@ -6,6 +6,7 @@ verify_ssl = true
 [dev-packages]
 pylint = "*"
 pycodestyle = "*"
+black = "*"
 
 [packages]
 pylint = "*"
@@ -13,6 +14,10 @@ requests = "*"
 tqdm = "*"
 tabulate = "*"
 geomet = "*"
+pyyaml = "*"
 
 [requires]
 python_version = "3.7"
+
+[pipenv]
+allow_prereleases = true
