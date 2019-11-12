@@ -67,23 +67,72 @@ import re
 import typing
 from typing import Dict, Tuple, List, Optional
 import queue
+import yaml
 
 from geomet import wkt
 
 from . import utilities
 
 from .transfer_monitor import TransferMonitor
-from .utils import TaskStatus
+from .utils import TaskStatus, ConfigFileProblem, ConfigValueMissing
+
 
 class L8Downloader:
 
-    def __init__(self, path_to_config, username=None, password=None, verbose=False):
+    def __init__(self, path_to_config='config.yaml', username=None, password=None, verbose=False):
 
-        if os.path.exists(path_to_config):
-            with open(path_to_config) as f:
-                self.config = json.load(f)
-        else:
-            self.config = None
+        # create logger
+        self.logger = logging.getLogger(__name__)
+
+        # create console handler and set level to debug
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        ch.setFormatter(formatter)
+        self.logger.addHandler(ch)
+
+        # Load config from config.yaml
+        try:
+            with open(path_to_config, "r") as stream:
+                config = yaml.safe_load(stream)
+
+        except yaml.YAMLError as exc:
+            self.logger.error("Problem loading config... exiting...")
+            raise ConfigFileProblem
+
+        except FileNotFoundError as e:
+            self.logger.error(f"Missing config file with path {path_to_config}")
+            raise e
+
+        except BaseException as e:
+            self.logger.error('Unknown problem occurred while loading config')
+
+        required_config_keys = [
+            "USGS_EE_USER",
+            "USGS_EE_PASS",
+        ]
+
+        self.logger.debug(config.keys())
+
+        try:
+            config.keys()
+        except AttributeError as e:
+            raise ConfigFileProblem
+
+        # Find the difference between sets
+        # required_config_keys can be a sub set of config.keys()
+        missing_keys = set(required_config_keys) - set(list(config.keys()))
+
+        if len(list(missing_keys)) != 0:
+            self.logger.error(f"Config file loaded but missing critical vars, {missing_keys}")
+            raise ConfigValueMissing
+
+        self.username = config['USGS_EE_USER']
+        self.password = config['USGS_EE_PASS']
+
+        if not (bool(self.username) and bool(self.password)):
+            self.logger.error('Missing auth env vars, MISSING USERNAME OR PASSWORD')
+            raise ConfigValueMissing
 
         self.url_base_string = "https://earthexplorer.usgs.gov/inventory/json/v/1.4.1/"
         self.url_post_string = self.url_base_string + "{}"
@@ -100,38 +149,6 @@ class L8Downloader:
         self.api_timeout = 60 * 60
 
         self.verbose = verbose
-
-        self.username = os.environ.get('USGS_EE_USER')
-        self.password = os.environ.get('USGS_EE_PASS')
-
-        if not (bool(self.username) and bool(self.password)):
-            print('Missing auth env vars, MISSING USERNAME OR PASSWORD')
-            print('Set the appropriate auth values in USGS_EE_USER and USGS_EE_PASS')
-            raise('Missing critical auth env vars.')
-
-        # # create logger
-        self.logger = logging.getLogger(__name__)
-        # self.logger.setLevel(logging.DEBUG)
-
-        # # create console handler and set level to debug
-        # ch = logging.StreamHandler()
-        # ch.setLevel(logging.DEBUG)
-
-        # # create formatter
-        # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-        # # add formatter to ch
-        # ch.setFormatter(formatter)
-
-        # # add ch to logger
-        # self.logger.addHandler(ch)
-
-        # # 'application' code
-        # self.logger.debug('debug message')
-        # self.logger.info('info message')
-        # self.logger.warn('warn message')
-        # self.logger.error('error message')
-        # self.logger.critical('critical message')
 
     def authenticate(self):
         """ Read the .json config file to get the user name and password"""
@@ -1001,7 +1018,7 @@ class L8Downloader:
 
                 child_filter_list.append(filter_pathrow)
 
-
+            # {'fieldId': 20510, 'name': 'Collection Category', 'fieldLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#collection_category', 'valueList': [{'value': None, 'name': 'All'}, {'value': 'T1', 'name': 'Tier 1'}, {'value': 'T2', 'name': 'Tier 2'}, {'value': 'RT', 'name': 'Real-Time'}]}, 
             data["additionalCriteria"] = {
                 "filterType": "and",
                 "childFilters": [
@@ -1011,28 +1028,25 @@ class L8Downloader:
                     }
                 ]
             }
-                # "filterType": "and",
-                # "childFilters": [
+            
+            if 'collection_category' in query_dict.keys():
+                collection_filter = {
+                    "filterType": "or",
+                    "childFilters": []
+                }
 
-                            # },
-                            # {
-                            #     "filterType": "value",
-                            #     "fieldId": 20516,
-                            #     "value": " 025",
-                            #     "operand": "like"
-                            # }
+                for collection in query_dict['collection_category']:
+                    value_filter = {
+                        "filterType": "value",
+                        "fieldId": 20510,
+                        "value": collection,
+                        "operand": "like"
+                    }
 
-                        #     filter_pathrow = {
-                        #         "filterType": "and",
-                        #         "childFilters": [
-                        #             filter_dict_path,
-                        #             filter_dict_row
-                        #         ]
-                        #     }
+                    collection_filter['childFilters'].append(value_filter)
+                
+                data["additionalCriteria"]["childFilters"].append(collection_filter)
 
-                        #     child_filter_list.append(filter_pathrow)
-                    # #
-            #     ]
             # }
             # TODO: Fix this later
             # data["additionalCriteria"] = {

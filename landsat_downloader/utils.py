@@ -9,6 +9,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class HiddenPrints:
     """Small utility class to suppress 3rd party print statements
 
@@ -33,13 +34,13 @@ class HiddenPrints:
 
     def __enter__(self):
         self._original_stdout = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
+        sys.stdout = open(os.devnull, "w")
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         sys.stdout = self._original_stdout
 
 
-TaskStatus = namedtuple('TaskStatus', ['status', 'message', 'data'])
+TaskStatus = namedtuple("TaskStatus", ["status", "message", "data"])
 
 # Code below is from django example here:
 # https://stackoverflow.com/questions/18319101/whats-the-best-way-to-generate-random-strings-of-a-specific-length-in-python
@@ -48,21 +49,25 @@ import random
 import hashlib
 import time
 
-SECRET_KEY = 'MY SECRET KEY IS HERE IT IS FOR MAKING A HASH UNIQUE OH BOY!'
+SECRET_KEY = "MY SECRET KEY IS HERE IT IS FOR MAKING A HASH UNIQUE OH BOY!"
 
 try:
     random = random.SystemRandom()
     using_sysrandom = True
 except NotImplementedError:
     import warnings
-    warnings.warn('A secure pseudo-random number generator is not available '
-                  'on your system. Falling back to Mersenne Twister.')
+
+    warnings.warn(
+        "A secure pseudo-random number generator is not available "
+        "on your system. Falling back to Mersenne Twister."
+    )
     using_sysrandom = False
 
 
-def get_random_string(length=12,
-                      allowed_chars='abcdefghijklmnopqrstuvwxyz'
-                                    'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'):
+def get_random_string(
+    length=12,
+    allowed_chars="abcdefghijklmnopqrstuvwxyz" "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+):
     """
     Returns a securely generated random string.
 
@@ -78,16 +83,16 @@ def get_random_string(length=12,
         # is better than absolute predictability.
         random.seed(
             hashlib.sha256(
-                ("%s%s%s" % (
-                    random.getstate(),
-                    time.time(),
-                    SECRET_KEY)).encode('utf-8')
-            ).digest())
-    return ''.join(random.choice(allowed_chars) for i in range(length))
+                ("%s%s%s" % (random.getstate(), time.time(), SECRET_KEY)).encode(
+                    "utf-8"
+                )
+            ).digest()
+        )
+    return "".join(random.choice(allowed_chars) for i in range(length))
 
 
 def abortable_worker(func, *args, **kwargs):
-    timeout = kwargs.get('timeout', None)
+    timeout = kwargs.get("timeout", None)
     p = ThreadPool(1)
     res = p.apply_async(func, args=args)
     try:
@@ -98,8 +103,21 @@ def abortable_worker(func, *args, **kwargs):
         p.terminate()
         raise
 
+
 def resultCallback(result):
     logger.debug("Got result {}".format(result))
 
+
 def errorCallback(result):
     logger.critical("Got ERROR {}".format(result))
+
+
+# Exceptions
+
+
+class ConfigFileProblem(Exception):
+    pass
+
+
+class ConfigValueMissing(Exception):
+    pass
