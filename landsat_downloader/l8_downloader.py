@@ -1618,6 +1618,7 @@ class L8Downloader:
                 transfer.finish()
 
             except BaseException as e:
+                transfer.finish()
                 return TaskStatus(False, 'An exception occured while trying to download.', e)
             else:
                 return TaskStatus(True, 'Download successful', filename)
