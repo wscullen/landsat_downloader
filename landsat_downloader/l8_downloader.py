@@ -1606,7 +1606,13 @@ class L8Downloader:
         # self.check_auth() Since auth is baked into the url passed back from get
         # download url, the auth check is unnecessary
         print('Trying to download the file')
-        r = requests.get(url, stream=True, timeout=60*60)
+        try:
+            r = requests.get(url, stream=True, timeout=60*60)
+        
+        except BaseException as e:
+            print(e)
+            return TaskStatus(False, 'An exception occured while trying to download.', e)
+            
         print(r.status_code)
         if not os.path.isfile(filename):
             try:
