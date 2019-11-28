@@ -1624,6 +1624,7 @@ class L8Downloader:
                 transfer.finish()
 
             except BaseException as e:
+                transfer.finish()
                 return TaskStatus(False, 'An exception occured while trying to download.', e)
             else:
                 return TaskStatus(True, 'Download successful', filename)
@@ -1985,7 +1986,7 @@ class L8Downloader:
             for item in item_list:
                 download_url = item['product_dload_url']
 
-                r = requests.get(download_url, stream=True)
+                r = requests.get(download_url, stream=True, timeout=60*60)
 
                 if directory:
                     file_name = os.path.split(item['product_dload_url'])[1]
