@@ -1621,12 +1621,12 @@ class L8Downloader:
                 with open(filename, 'wb') as f:
                     for chunk in r.iter_content(chunk_size=1000000):
                         f.write(chunk)
-                transfer.finish()
 
             except BaseException as e:
                 transfer.finish()
                 return TaskStatus(False, 'An exception occured while trying to download.', e)
             else:
+                transfer.finish()
                 return TaskStatus(True, 'Download successful', filename)
         else:
             return TaskStatus(False, 'Requested file to download already exists.', filename)
