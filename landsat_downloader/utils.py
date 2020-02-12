@@ -121,3 +121,7 @@ class ConfigFileProblem(Exception):
 
 class ConfigValueMissing(Exception):
     pass
+
+
+class AuthFailure(Exception):
+    pass

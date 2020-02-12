@@ -74,7 +74,7 @@ from geomet import wkt
 from . import utilities
 
 from .transfer_monitor import TransferMonitor
-from .utils import TaskStatus, ConfigFileProblem, ConfigValueMissing
+from .utils import TaskStatus, ConfigFileProblem, ConfigValueMissing, AuthFailure
 
 
 class L8Downloader:
@@ -195,33 +195,31 @@ class L8Downloader:
 
             try:
                 r = requests.post(login_url, payload)
-                # print('auth result: ')
-                # print(r)
             except BaseException as e:
-                print(e)
-
-            if r.status_code == 200:
-                result = r.json()
-                # print(result)
-                if result['error'] != '':
-                    print(f"Unable to authenticate, error: {result['error']}, errorInfo: {result['errorCode']}")
-                    return None
-                else:
-
-                    self.auth_token['token'] = result['data']
-                    self.auth_token['last_active'] = time.time()
-
-                    with open(auth_file, 'w') as outfile:
-                        json.dump(self.auth_token, outfile)
-
-                    return self.auth_token
-
-            else:
-                print('There was a problem authenticating, status_code is {}'.format(
-                    r.status_code))
-                logging.debug(
-                    'There was a problem authenticating, status_code = {}'.format(r.status_code))
+                self.logger.warning(f'There was a problem authenticating, connection to server failed. Exception: {str(e)}')
                 return None
+            else:
+                
+                if r.status_code == 200:
+                    result = r.json()
+
+                    if result['error'] != '':
+                        self.logger.warning(f"Unable to authenticate, error: {result['error']}, errorInfo: {result['errorCode']}")
+                        return None
+                    else:
+
+                        self.auth_token['token'] = result['data']
+                        self.auth_token['last_active'] = time.time()
+
+                        with open(auth_file, 'w') as outfile:
+                            json.dump(self.auth_token, outfile)
+
+                        return self.auth_token
+
+                else:
+                    self.logger.warning(
+                        f'There was a problem authenticating, status_code = {r.status_code}')
+                    return None
 
     def json_request(self):
         pass
@@ -234,16 +232,16 @@ class L8Downloader:
         attempts=0
         delay=self.initial_delay
 
-        print('trying to auth')
-        result=self.authenticate()
-        print(f'auth result {result}')
+        self.logger.debug('Trying to auth...')
+        result = self.authenticate()
+        self.logger.debug(f'Suth result {result}')
 
         while attempts < self.max_attempts:
             result=self.authenticate()
             if result:
                 return result
 
-            print('Problems authenticating, trying again after delay...')
+            self.logger.warning('Problems authenticating, trying again after delay...')
             time.sleep(delay)
             delay *= 2
             attempts += 1
@@ -252,19 +250,29 @@ class L8Downloader:
         return None
 
     def check_auth(self):
-        print('checking auth status')
+        self.logger.info('Checking auth status...')
         now=time.time()
 
         if self.auth_token['token']:
             time_diff=now - self.auth_token['last_active']
 
             if time_diff > (self.api_timeout):
-                print('tryin to authenticate again because of timeout')
-                return self.auth_attempt()
+                self.logger.debug('Trying to authenticate again because auth token has timed out.')
+                auth_result = self.auth_attempt()
+
+                if auth_result:
+                    return auth_result
+                else:
+                    raise AuthFailure('Cannot connect to auth api end point')
 
         else:
-            print('trying to authenticate because there is no timeout')
-            return self.auth_attempt()
+            self.logger.debug('Trying to authenticate because there is no previous auth token.')
+            auth_result = self.auth_attempt()
+
+            if auth_result:
+                return auth_result
+            else:
+                raise AuthFailure('Cannot connect to auth api end point')
 
     def update_auth_time(self):
 
@@ -278,10 +286,9 @@ class L8Downloader:
     def create_data_search_object_by_polygon(self, dataset_name, polygon, query_dict):
         self.check_auth()
 
-        platform_name = "Unknown"
-        # self.logger.debug('trying to search for products')
         poly = ogr.CreateGeometryFromWkt(polygon)
         env = poly.GetEnvelope()
+
         # print "minX: %d, minY: %d, maxX: %d, maxY: %d" %(env[0],env[2],env[1],env[3])
         lowerleftX = env[0]
         lowerleftY = env[2]
@@ -311,7 +318,6 @@ class L8Downloader:
         }
 
         if dataset_name == 'LANDSAT_8_C1':
-            platform_name = "Landsat-8"
 
             data["additionalCriteria"] = {
                 "filterType": "and",
@@ -361,8 +367,6 @@ class L8Downloader:
 
         self.check_auth()
 
-        # self.logger.debug('trying to search for datasets')
-
         data={
             "datasetName": search_term,
             "apiKey": self.auth_token['token']
@@ -374,28 +378,30 @@ class L8Downloader:
             "jsonRequest": json.dumps(data)
         }
 
-        r = requests.post(dataset_url, payload)
-
-        result = r.json()
-
-        if r.status_code == 200 and result['errorCode'] == None:
-            self.update_auth_time()
-            if self.verbose:
-                self.list_results(result['data'], ['datasetName',
-                                                'datasetFullName',
-                                                'startDate',
-                                                'endDate',
-                                                'supportDownload',
-                                                'totalScenes',
-                                                'supportBulkDownload',
-                                                'bulkDownloadOrderLimit',
-                                                'supportCloudCover'
-                                                ],
-                                                'search_datasets')
-
+        try: 
+            r = requests.post(dataset_url, payload)
+        except BaseException as e:
+            self.logger.warning(str(e))
         else:
-            print('There was a problem getting datasets, status_code = {}, errorCode = {}, error = {}'.format(
-                r.status_code, result['errorCode'], result['error']))
+            result = r.json()
+
+            if r.status_code == 200 and result['errorCode'] == None:
+                self.update_auth_time()
+                if self.verbose:
+                    self.list_results(result['data'], ['datasetName',
+                                                    'datasetFullName',
+                                                    'startDate',
+                                                    'endDate',
+                                                    'supportDownload',
+                                                    'totalScenes',
+                                                    'supportBulkDownload',
+                                                    'bulkDownloadOrderLimit',
+                                                    'supportCloudCover'
+                                                    ],
+                                                    'search_datasets')
+
+            else:
+                self.logger.warning(f"There was a problem getting datasets, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}")
 
     def get_dataset_field_ids(self, dataset_name):
         """
@@ -410,8 +416,6 @@ class L8Downloader:
 
         self.check_auth()
 
-        # self.logger.debug('trying to search for datasets')
-
         data={
             "datasetName": dataset_name,
             "apiKey": self.auth_token['token']
@@ -423,24 +427,27 @@ class L8Downloader:
             "jsonRequest": json.dumps(data)
         }
 
-        r = requests.post(dataset_url, payload)
-
-        result = r.json()
-
-        if r.status_code == 200 and result['errorCode'] == None:
-            self.update_auth_time()
-            if self.verbose:
-                self.list_results(result['data'], ['fieldId',
-                                                'name',
-                                                'fieldLink',
-                                                'valueList'
-                                                ],
-                                                'get_dataset_field_id')
-
-            return result['data']
-
+        try:
+            r = requests.post(dataset_url, payload)
+        except BaseException as e:
+            self.logger.warning(str(e))
         else:
-            print('There was a problem getting datasets, status_code = {}, errorCode = {}, error = {}'.format(r.status_code, result['errorCode'], result['error']))
+            result = r.json()
+
+            if r.status_code == 200 and result['errorCode'] == None:
+                self.update_auth_time()
+                if self.verbose:
+                    self.list_results(result['data'], ['fieldId',
+                                                    'name',
+                                                    'fieldLink',
+                                                    'valueList'
+                                                    ],
+                                                    'get_dataset_field_id')
+
+                return result['data']
+
+            else:
+                self.logger.warning(f"There was a problem getting datasets, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}")
 
 
     def list_results(self, result, key_list, name_of_api_call, write_to_csv=False):
@@ -465,7 +472,7 @@ class L8Downloader:
             result_list.append(row)
             result_list_full.append(row_full)
 
-        print(tabulate(result_list, headers=key_list, tablefmt='orgtbl'))
+        self.logger.info(tabulate(result_list, headers=key_list, tablefmt='orgtbl'))
 
         if write_to_csv:
             now = datetime.now()
@@ -490,15 +497,17 @@ class L8Downloader:
             "jsonRequest": json.dumps(data)
         }
 
-        r = requests.post(dataset_url, payload, timeout=60)
-
-        result = r.json()
-        # print(result)
-
-        if r.status_code == 200 and result['errorCode'] == None:
-            return result['data']
+        try:
+            r = requests.post(dataset_url, payload, timeout=60)
+        except BaseException as e:
+            self.logger.warning(str(e))
         else:
-            return -1
+            result = r.json()
+
+            if r.status_code == 200 and result['errorCode'] == None:
+                return result['data']
+            else:
+                return -1
 
     def populate_result_list(self, result, platform_name, dataset_name, detailed=False):
         """ Takes a dictionary of results from the query, returns a standardized
@@ -556,7 +565,7 @@ class L8Downloader:
                 result_list.append(product_dict)
 
         elif platform_name == 'Sentinel-2':
-            print('Sentinel2-result dictionary being built')
+            self.logger.info('Sentinel2-result dictionary being built')
 
             for idx, r in enumerate(result['data']['results']):
                 product_dict = {}
@@ -619,7 +628,7 @@ class L8Downloader:
                 result_list.append(product_dict)
 
         if detailed:
-            print(result_list)
+            self.logger.info(result_list)
             # use scene search to get the detailed metadat fields
             result_list = self.fill_detailed_metadata(result_list)
 
@@ -730,9 +739,6 @@ class L8Downloader:
                         "operand": "like"
                     }
 
-                    print(product_name[:27])
-                    print(converted_product_name)
-
                     child_filter_list.append({
                         "filterType": "and",
                         "childFilters": [
@@ -779,52 +785,57 @@ class L8Downloader:
         }
 
         time.sleep(0.25)
-        r = requests.post(dataset_url, payload, timeout=300)
+        try:
 
-        if r.status_code == 200:
-            result = r.json()
-
-            if result['errorCode'] == None:
-                self.update_auth_time()
-                if self.verbose:
-                    self.list_results(result['data']['results'],
-                                                ['acquisitionDate',
-                                                'spatialFootprint',
-                                                'browseUrl',
-                                                'downloadUrl',
-                                                'entityId',
-                                                'metadataUrl',
-                                                'summary',
-                                                'bulkOrdered',
-                                                'ordered'
-                                                ],
-                                                'search_for_products', write_to_csv=write_to_csv)
-
-                result_list = self.populate_result_list(result, platform_name, dataset_name, detailed=detailed)
-
-                if just_entity_ids:
-                    return [r['entity_id'] for r in result_list]
-                else:
-                    return result_list
-
-            elif result['errorCode'] == 'RATE_LIMIT':
-                print('API access is denied because of a RATE LIMIT issue. Waiting for 5 mins and calling again.')
-                print(f'Current retry count at {call_count}')
-
-                if call_count > self.max_attempts:
-                    print('Max retries exceeded. Giving up on current task')
-                    return []
-
-                time.sleep(60 * 5)
-                call_count += 1
-
-                self.search_for_products_by_name(dataset_name, product_name_list, query_dict, call_count=call_count)
-            else:
-                print('There was a problem getting products, status_code = {}, errorCode = {}, error = {}'.format(r.status_code, result['errorCode'], result['error']))
-                return []
-        else:
-            print('There was a problem getting products, status_code = {}, errorCode = {}, error = {}'.format(r.status_code, result['errorCode'], result['error']))
+            r = requests.post(dataset_url, payload, timeout=300)
+        except BaseException as e:
+            self.logger.warning(str(e))
             return []
+        else:
+            if r.status_code == 200:
+                result = r.json()
+
+                if result['errorCode'] == None:
+                    self.update_auth_time()
+                    if self.verbose:
+                        self.list_results(result['data']['results'],
+                                                    ['acquisitionDate',
+                                                    'spatialFootprint',
+                                                    'browseUrl',
+                                                    'downloadUrl',
+                                                    'entityId',
+                                                    'metadataUrl',
+                                                    'summary',
+                                                    'bulkOrdered',
+                                                    'ordered'
+                                                    ],
+                                                    'search_for_products', write_to_csv=write_to_csv)
+
+                    result_list = self.populate_result_list(result, platform_name, dataset_name, detailed=detailed)
+
+                    if just_entity_ids:
+                        return [r['entity_id'] for r in result_list]
+                    else:
+                        return result_list
+
+                elif result['errorCode'] == 'RATE_LIMIT':
+                    self.logger.warning('API access is denied because of a RATE LIMIT issue. Waiting for 5 mins and calling again.')
+                    self.logger.warning(f'Current retry count at {call_count}')
+
+                    if call_count > self.max_attempts:
+                        self.logger.error('Max retries exceeded. Giving up on current task')
+                        return []
+
+                    time.sleep(60 * 5)
+                    call_count += 1
+
+                    self.search_for_products_by_name(dataset_name, product_name_list, query_dict, call_count=call_count)
+                else:
+                    self.logger.warning(f"There was a problem getting products, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['errorCode']}")
+                    return []
+            else:
+                self.logger.warning(f"There was a problem getting products, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}")
+                return []
 
     def search_for_products(self, dataset_name, polygon, query_dict, detailed=False, just_entity_ids=False, write_to_csv=False):
         """
@@ -921,46 +932,44 @@ class L8Downloader:
         dataset_url = self.url_post_string.format("search")
         all_results = []
 
-        # total_num = self.get_total_products(data)
-        # if total_num == -1:
-        #     print('something went wrong, got no results')
-        #     return []
-
-        # data['maxResults'] = total_num
         data['maxResults'] = 5000
-        # print(total_num)
         payload = {
             "jsonRequest": json.dumps(data)
         }
         time.sleep(0.25)
-        r = requests.post(dataset_url, payload, timeout=240)
-        self.logger.debug(r)
-        result = r.json()
+        try:
+            r = requests.post(dataset_url, payload, timeout=240)
+        
+        except BaseExecption as e:
+            self.logger.warning(str(e))
 
-        if r.status_code == 200 and result['errorCode'] == None:
-            self.update_auth_time()
-            if self.verbose:
-                self.list_results(result['data']['results'],
-                                            ['acquisitionDate',
-                                            'spatialFootprint',
-                                            'browseUrl',
-                                            'downloadUrl',
-                                            'entityId',
-                                            'metadataUrl',
-                                            'summary',
-                                            'bulkOrdered',
-                                            'ordered'
-                                            ],
-                                            'search_for_products', write_to_csv=write_to_csv)
-
-            result_list = self.populate_result_list(result, platform_name, dataset_name, detailed=detailed)
-
-            if just_entity_ids:
-                return [r['entity_id'] for r in result_list]
-            else:
-                return result_list
         else:
-            print('There was a problem getting products, status_code = {}, errorCode = {}, error = {}'.format(r.status_code, result['errorCode'], result['error']))
+            result = r.json()
+
+            if r.status_code == 200 and result['errorCode'] == None:
+                self.update_auth_time()
+                if self.verbose:
+                    self.list_results(result['data']['results'],
+                                                ['acquisitionDate',
+                                                'spatialFootprint',
+                                                'browseUrl',
+                                                'downloadUrl',
+                                                'entityId',
+                                                'metadataUrl',
+                                                'summary',
+                                                'bulkOrdered',
+                                                'ordered'
+                                                ],
+                                                'search_for_products', write_to_csv=write_to_csv)
+
+                result_list = self.populate_result_list(result, platform_name, dataset_name, detailed=detailed)
+
+                if just_entity_ids:
+                    return [r['entity_id'] for r in result_list]
+                else:
+                    return result_list
+            else:
+                self.logger.warning(f"There was a problem getting products, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}")
 
     def search_for_products_by_tile(self, dataset_name, tile_list, query_dict, just_entity_ids=False, write_to_csv=False, detailed=False):
         """
@@ -988,12 +997,9 @@ class L8Downloader:
             platform_name = "Landsat-8"
             cloud_maximum_percent = query_dict['cloud_percent']
             converted_cloud_max = int(math.ceil(cloud_maximum_percent / 10.0)) * 10
-            print(converted_cloud_max)
             # build out product list filter
             child_filter_list = []
             for pathrow in tile_list:
-                print(pathrow[:3])
-                print(pathrow[3:])
                 filter_dict_path = {
                     "filterType": "value",
                     "fieldId": 20514,
@@ -1047,7 +1053,6 @@ class L8Downloader:
                 
                 data["additionalCriteria"]["childFilters"].append(collection_filter)
 
-            # }
             # TODO: Fix this later
             # data["additionalCriteria"] = {
             #     "filterType": "and",
@@ -1060,7 +1065,6 @@ class L8Downloader:
             platform_name = 'Sentinel-2'
             cloud_maximum_percent = query_dict['cloud_percent']
             converted_cloud_max = math.floor(cloud_maximum_percent / 10) - 1
-            print(converted_cloud_max)
             # build out product list filter
             child_filter_list = []
             for gzd_100km in tile_list:
@@ -1091,13 +1095,12 @@ class L8Downloader:
             "jsonRequest": json.dumps(data)
         }
 
-        print(payload)
         time.sleep(0.25)
         try:
             r = requests.post(dataset_url, payload, timeout=240)
 
         except BaseException as e:
-            print(e)
+            self.logger.warning(str(e))
         else:
             self.logger.debug(r)
             result = r.json()
@@ -1118,8 +1121,7 @@ class L8Downloader:
                                                 ],
                                                 'search_for_products', write_to_csv=write_to_csv)
 
-                print(len(result))
-                print(result)
+                self.logger.info(f"Number of results found: {len(result)}")
 
                 result_list = self.populate_result_list(result, platform_name, dataset_name, detailed=detailed)
 
@@ -1128,7 +1130,7 @@ class L8Downloader:
                 else:
                     return result_list
             else:
-                print('There was a problem getting products, status_code = {}, errorCode = {}, error = {}'.format(r.status_code, result['errorCode'], result['error']))
+                self.logger.warning(f"There was a problem getting products, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}")
 
 
     def search_for_products_polygon_to_tiles(self,
@@ -1181,6 +1183,7 @@ class L8Downloader:
         # 18701
 
         self.check_auth()
+        
         platform_name = "Unknown"
 
         # 1. parse polygon into a list of MGRS gzd or WRS2 pathrow
@@ -1188,8 +1191,6 @@ class L8Downloader:
 
         gzd_list_100km = utilities.find_mgrs_intersection_100km(polygon,
                                                                 gzd_list)
-
-        print(gzd_list_100km)
 
         poly = ogr.CreateGeometryFromWkt(polygon)
         env = poly.GetEnvelope()
@@ -1235,7 +1236,6 @@ class L8Downloader:
             platform_name = 'Sentinel-2'
             cloud_maximum_percent = query_dict['cloud_percent']
             converted_cloud_max = math.floor(cloud_maximum_percent / 10) - 1
-            print(converted_cloud_max)
 
             # # build out product list filter
             # child_filter_list = []
@@ -1274,54 +1274,61 @@ class L8Downloader:
             "jsonRequest": json.dumps(data)
         }
         time.sleep(0.25)
-        r = requests.post(dataset_url, payload, timeout=240)
-        self.logger.debug(r)
-        result = r.json()
-
-        if r.status_code == 200 and result['errorCode'] == None:
-            self.update_auth_time()
-            if self.verbose:
-                self.list_results(result['data']['results'],
-                                            ['acquisitionDate',
-                                            'spatialFootprint',
-                                            'browseUrl',
-                                            'downloadUrl',
-                                            'entityId',
-                                            'metadataUrl',
-                                            'summary',
-                                            'bulkOrdered',
-                                            'ordered'
-                                            ],
-                                            'search_for_products', write_to_csv=write_to_csv)
-
-            print(len(result['data']['results']))
-            # Use to save out intermediate results for testing purposes
-            # with open('raw_alberta_aug2018_results.json', 'w') as outfile:
-            #     json.dump(result, outfile)
-
-            temp_results = utilities.filter_by_footprint(polygon,
-                                                         result['data']['results'],
-                                                         dataset_name)
-
-            # real_result_list = []
-
-            # for product in temp_results:
-            #     mgrs_id = product['displayId'].split('_')[1][1:]
-            #     # print(mgrs_id)
-            #     if mgrs_id in gzd_list_100km:
-
-            #         real_result_list.append(product)
-
-            result['data']['results'] = temp_results
-
-            result_list = self.populate_result_list(result, platform_name, dataset_name, detailed=detailed)
-
-            if just_entity_ids:
-                return [r['entity_id'] for r in result_list]
-            else:
-                return result_list
+        try:
+            r = requests.post(dataset_url, payload, timeout=240)
+        
+        except BaseException as e:
+            self.logger.warning(str(e))
         else:
-            print('There was a problem getting products, status_code = {}, errorCode = {}, error = {}'.format(r.status_code, result['errorCode'], result['error']))
+        
+            self.logger.debug(r)
+            result = r.json()
+
+            if r.status_code == 200 and result['errorCode'] == None:
+                self.update_auth_time()
+                if self.verbose:
+                    self.list_results(result['data']['results'],
+                                                ['acquisitionDate',
+                                                'spatialFootprint',
+                                                'browseUrl',
+                                                'downloadUrl',
+                                                'entityId',
+                                                'metadataUrl',
+                                                'summary',
+                                                'bulkOrdered',
+                                                'ordered'
+                                                ],
+                                                'search_for_products', write_to_csv=write_to_csv)
+
+                self.logger.info(f"Number of results: {len(result['data']['results'])}")
+                
+                # Use to save out intermediate results for testing purposes
+                # with open('raw_alberta_aug2018_results.json', 'w') as outfile:
+                #     json.dump(result, outfile)
+
+                temp_results = utilities.filter_by_footprint(polygon,
+                                                            result['data']['results'],
+                                                            dataset_name)
+
+                # real_result_list = []
+
+                # for product in temp_results:
+                #     mgrs_id = product['displayId'].split('_')[1][1:]
+                #     # print(mgrs_id)
+                #     if mgrs_id in gzd_list_100km:
+
+                #         real_result_list.append(product)
+
+                result['data']['results'] = temp_results
+
+                result_list = self.populate_result_list(result, platform_name, dataset_name, detailed=detailed)
+
+                if just_entity_ids:
+                    return [r['entity_id'] for r in result_list]
+                else:
+                    return result_list
+            else:
+                self.logger.warning(f"There was a problem getting products, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}")
 
     def fill_detailed_metadata(self, product_list):
         """
@@ -1330,11 +1337,11 @@ class L8Downloader:
         Uses search_scene_metadata to find the additional metadata.
         """
 
-        logging.info('populating detailed metadata for each entity')
+        self.logger.info('Populating detailed metadata for each product...')
         result_list = []
-        print(product_list)
+        self.logger.debug(product_list)
         detailed_metadata_list = self.search_scene_metadata(product_list[0]['dataset_name'], [r['entity_id'] for r in product_list])
-        print(detailed_metadata_list)
+        self.logger.debug(detailed_metadata_list)
 
         for r in product_list:
             if r['platform_name'] == 'Landsat-8':
@@ -1440,7 +1447,6 @@ class L8Downloader:
                     correct_product_name = '_'.join(temp_arr)
 
                 product_dict['vendor_name'] = correct_product_name
-                print(f"vendor name: {product_dict['vendor_name']}")
                 result_list.append(product_dict)
 
         return result_list
@@ -1473,25 +1479,27 @@ class L8Downloader:
             "jsonRequest": json.dumps(data)
         }
 
-        r = requests.post(dataset_url, payload)
-
-
-        result = r.json()
-        metadata_list = []
-        if r.status_code == 200:
-            self.update_auth_time()
-
-            if result['errorCode'] == None:
-                if self.verbose:
-                    self.list_results(result['data'], result['data'][0].keys(),
-                                                'search_scene_metadata', write_to_csv=write_to_csv)
-
-                for r in result['data']:
-                    metadata_list.append(r)
-
-                return metadata_list
+        try:
+            r = requests.post(dataset_url, payload)
+        except BaseException as e:
+            self.logger.warning(str(e))
         else:
-            print('There was a problem getting datasets, status_code = {}, errorCode = {}, error = {}'.format(r.status_code, result['errorCode'], result['error']))
+            result = r.json()
+            metadata_list = []
+            if r.status_code == 200:
+                self.update_auth_time()
+
+                if result['errorCode'] == None:
+                    if self.verbose:
+                        self.list_results(result['data'], result['data'][0].keys(),
+                                                    'search_scene_metadata', write_to_csv=write_to_csv)
+
+                    for r in result['data']:
+                        metadata_list.append(r)
+
+                    return metadata_list
+            else:
+                self.logger.warning(f"There was a problem getting datasets, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}")
 
     def search_download_options(self, dataset_name, entity_id_list, write_to_csv=False):
         """
@@ -1519,28 +1527,31 @@ class L8Downloader:
             "jsonRequest": json.dumps(data)
         }
 
-        r = requests.post(dataset_url, payload)
-
-        result = r.json()
-
-        if r.status_code == 200 and result['errorCode'] == None:
-            self.update_auth_time()
-            if self.verbose:
-                self.list_results(result['data'],
-                                  ['downloadOptions', 'entityId'],
-                                  'search_dataset_fields',
-                                  write_to_csv=write_to_csv)
-
-            product_set = set()
-
-            for product in result['data']:
-                for download_product in product['downloadOptions']:
-                    product_set.add(download_product['downloadCode'])
-
-            return list(product_set)
-
+        try:
+            r = requests.post(dataset_url, payload)
+        except BaseException as e:
+            self.logger.warning(str(e))
         else:
-            print('There was a problem getting datasets, status_code = {}, errorCode = {}, error = {}'.format(r.status_code, result['errorCode'], result['error']))
+            result = r.json()
+
+            if r.status_code == 200 and result['errorCode'] == None:
+                self.update_auth_time()
+                if self.verbose:
+                    self.list_results(result['data'],
+                                    ['downloadOptions', 'entityId'],
+                                    'search_dataset_fields',
+                                    write_to_csv=write_to_csv)
+
+                product_set = set()
+
+                for product in result['data']:
+                    for download_product in product['downloadOptions']:
+                        product_set.add(download_product['downloadCode'])
+
+                return list(product_set)
+
+            else:
+                self.logger.warning(f"There was a problem getting datasets, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}")
 
     def get_download_urls(self, dataset_name, entity_id_list, product_list, auth_token=None):
         """
@@ -1575,61 +1586,62 @@ class L8Downloader:
         payload = {
             "jsonRequest": json.dumps(data)
         }
-
-        r = requests.post(dataset_url, payload)
-
-        result = r.json()
-
-        print(result)
-        print(r.status_code)
-
-        if r.status_code == 200 and result['errorCode'] == None:
-            if not auth_token:
-                self.update_auth_time()
-
-            if self.verbose:
-                self.list_results(result['data'], [
-                                                'entityId',
-                                                'product',
-                                                'url'
-                                                ],
-                                                'get_download_urls', write_to_csv=True)
-
-            return [{'url': r['url'], 'entity_id': r['entityId'], 'product': r['product']} for r in result['data']]
-
+        try:
+            r = requests.post(dataset_url, payload)
+        except BaseException as e:
+            self.logger.warning(str(e))
         else:
-            print('There was a problem getting download urls, status_code = {}, errorCode = {}, error = {}'.format(r.status_code, result['errorCode'], result['error']))
+            result = r.json()
+
+            if r.status_code == 200 and result['errorCode'] == None:
+                if not auth_token:
+                    self.update_auth_time()
+
+                if self.verbose:
+                    self.list_results(result['data'], [
+                                                    'entityId',
+                                                    'product',
+                                                    'url'
+                                                    ],
+                                                    'get_download_urls', write_to_csv=True)
+
+                return [{'url': r['url'], 'entity_id': r['entityId'], 'product': r['product']} for r in result['data']]
+
+            else:
+                self.logger.warning(f"There was a problem getting download urls, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}")
 
     def download_file(self, filename, url, id=0):
         # NOTE the stream=True parameter
 
         # self.check_auth() Since auth is baked into the url passed back from get
         # download url, the auth check is unnecessary
-        print('Trying to download the file')
+        self.logger.info('Trying to download the file...')
         try:
             r = requests.get(url, stream=True, timeout=60*60)
         
         except BaseException as e:
-            print(e)
+            self.logger.warning(str(e))
             return TaskStatus(False, 'An exception occured while trying to download.', e)
-            
-        print(r.status_code)
-        if not os.path.isfile(filename):
-            try:
-
-                transfer = TransferMonitor(filename, id)
-                with open(filename, 'wb') as f:
-                    for chunk in r.iter_content(chunk_size=1000000):
-                        f.write(chunk)
-
-            except BaseException as e:
-                transfer.finish()
-                return TaskStatus(False, 'An exception occured while trying to download.', e)
-            else:
-                transfer.finish()
-                return TaskStatus(True, 'Download successful', filename)
         else:
-            return TaskStatus(False, 'Requested file to download already exists.', filename)
+
+            self.logger.info(f'Response status code: {r.status_code}')
+
+            if not os.path.isfile(filename):
+                try:
+
+                    transfer = TransferMonitor(filename, id)
+                    with open(filename, 'wb') as f:
+                        for chunk in r.iter_content(chunk_size=1000000):
+                            f.write(chunk)
+
+                except BaseException as e:
+                    transfer.finish()
+                    return TaskStatus(False, 'An exception occured while trying to download.', e)
+                else:
+                    transfer.finish()
+                    return TaskStatus(True, 'Download successful', filename)
+            else:
+                return TaskStatus(False, 'Requested file to download already exists.', filename)
 
     def search_dataset_fields(self, dataset_name):
         """
@@ -1654,32 +1666,34 @@ class L8Downloader:
         payload = {
             "jsonRequest": json.dumps(data)
         }
+        try:
+            r = requests.post(dataset_url, payload)
+        except BaseException as e:
+            self.logger.warning(str(e))
 
-        r = requests.post(dataset_url, payload)
-
-        result = r.json()
-
-        if r.status_code == 200 and result['errorCode'] == None:
-            self.update_auth_time()
-            if self.verbose:
-                self.list_results(result['data'],
-                                ['fieldId',
-                                'name',
-                                'fieldLink',
-                                'valueList'],
-                                'search_dataset_fields', write_to_csv=True)
-            return result
         else:
-            print('There was a problem getting datasets, status_code = {}, errorCode = {}, error = {}'.format(r.status_code, result['errorCode'], result['error']))
+            result = r.json()
+
+            if r.status_code == 200 and result['errorCode'] == None:
+                self.update_auth_time()
+                if self.verbose:
+                    self.list_results(result['data'],
+                                    ['fieldId',
+                                    'name',
+                                    'fieldLink',
+                                    'valueList'],
+                                    'search_dataset_fields', write_to_csv=True)
+                return result
+            else:
+                self.logger.warning(f"There was a problem getting datasets, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}")
 
     def download_products(self, product_list, product_type, date_string, auth_token=None):
         """ Iterates over list of products, starts download_task for each
 
         """
 
-        print('Starting download tasks... this may take a while!')
-        path = os.path.join(
-                            date_string + 'jobstatus.json')
+        self.logger.info('Starting download tasks... this may take a while!')
+        path = os.path.join(date_string + 'jobstatus.json')
 
         # Create a pool of 2 workers, iterate over the list of products and
         # start the tasks as workers become available
@@ -1693,7 +1707,7 @@ class L8Downloader:
             # the job status list
             for index, product in enumerate(product_list):
 
-                print('starting a task')
+                self.logger.info('Starting a task...')
                 async_started = pool.apply_async(self.download_product,
                                                 (product,
                                                 product_type),
@@ -1752,11 +1766,9 @@ class L8Downloader:
             the download url is temporary and should be downloaded immediately
 
         """
-        if not auth_token:
-            self.check_auth()
-            auth_token = self.auth_token
+        self.check_auth()
 
-        print('Downloading single product with L8Downloader')
+        self.logger.info('Downloading single product with L8Downloader')
         file_name = ''
 
         if product_dict['platform_name'] == 'Landsat-8':
@@ -1777,25 +1789,14 @@ class L8Downloader:
         if directory:
             file_name = os.path.join(directory, file_name)
 
-        print(product_dict)
-        print(product_type)
-        print(directory)
-        print(auth_token)
-        print(file_name)
-
-        print(os.path.isfile(file_name))
-
-
         if not os.path.isfile(file_name):
             download_url = self.get_download_urls(product_dict['dataset_name'],
                                                  [product_dict['entity_id']],
                                                  [product_type],
                                                  auth_token=auth_token)
 
-            print(download_url)
-
             if download_url:
-                print('found download url okay, downloading file...')
+                self.logger.info('Found download url okay, downloading file...')
                 # download_file returns a TaskStatus named tuple
                 result = self.download_file(file_name, download_url[0]['url'], id)
 
@@ -1851,16 +1852,19 @@ class L8Downloader:
             }
         }
 
-        r = requests.post(url='https://espa.cr.usgs.gov/api/v1/order', json=datapayload, auth=(username, password))
-
-        response = r.json()
-
-        self.logger.debug(r.status_code)
-
-        if r.status_code in [200, 201]:
-            return response['orderid']
+        try:
+            r = requests.post(url='https://espa.cr.usgs.gov/api/v1/order', json=datapayload, auth=(username, password))
+        except BaseException as e:
+            self.logger.warning(str(e))
         else:
-            return False
+            response = r.json()
+
+            self.logger.debug(r.status_code)
+
+            if r.status_code in [200, 201]:
+                return response['orderid']
+            else:
+                return False
 
     def batch_submit_order(self, product_list, batch_size=10):
         """ Break up the bulk order so that results are received quicker.
@@ -1890,61 +1894,69 @@ class L8Downloader:
         """
         username = self.username
         password = self.password
-        r = requests.get(url='https://espa.cr.usgs.gov/api/v1/list-orders', auth=(username, password))
-        # print(r)
-        # print(r.headers)
 
-
-        if r.status_code == 200:
-            response = r.json()
-            if len(response) != 0:
-                products_list = []
-                for order_id in response:
-                    order_dict = self.get_order_entity_ids(order_id)
-                    if order_dict['status'] in ['ordered', 'completed']:
-                        print("ORDER ID: {}, Info: {}".format(order_id, order_dict))
-                        products_list.append(order_dict)
-
-                return products_list
-        else:
-            print('There was a problem connecting to the USGS API, please try again later.')
-            print(r.status_code)
+        try:
+            r = requests.get(url='https://espa.cr.usgs.gov/api/v1/list-orders', auth=(username, password))
+        except BaseException as e:
+            self.logger.warning(str(e))
             return False
+        else:
+            if r.status_code == 200:
+                response = r.json()
+                if len(response) != 0:
+                    products_list = []
+                    for order_id in response:
+                        order_dict = self.get_order_entity_ids(order_id)
+                        if order_dict['status'] in ['ordered', 'completed']:
+                            self.logger.info(f"ORDER ID: {order_id}, Info: {order_dict}")
+                            products_list.append(order_dict)
+
+                    return products_list
+            else:
+                self.logger.warning(f'There was a problem connecting to the USGS API, please try again later. ({r.status_code})')
+                return False
 
     def check_order_status(self, order_id):
         username = self.username
         password = self.password
-        r = requests.get(url='https://espa.cr.usgs.gov/api/v1/order-status/{}'.format(order_id), auth=(username, password))
-
-        response = r.json()
-        self.logger.debug(r.status_code)
-        if r.status_code == 200:
-            if response['status'] == 'complete':
-                return True
+        try:
+            r = requests.get(url='https://espa.cr.usgs.gov/api/v1/order-status/{}'.format(order_id), auth=(username, password))
+        except BaseException as e:
+            self.logger.warning(str(e))
+        else:
+            response = r.json()
+            self.logger.debug(r.status_code)
+            if r.status_code == 200:
+                if response['status'] == 'complete':
+                    return True
+                else:
+                    return False
             else:
                 return False
-        else:
-            return False
 
 
     def get_order_entity_ids(self, order_id):
         username = self.username
         password = self.password
-        r = requests.get(url='https://espa.cr.usgs.gov/api/v1/order/{}'.format(order_id), auth=(username, password))
-        response = r.json()
-
-        if r.status_code in [200, 201]:
-            order_dict = {
-                "status" :response["status"],
-                "inputs_list": response["product_opts"]["olitirs8_collection"]["inputs"],
-                "order_date": response["order_date"],
-                "note": response["note"],
-                "order_id": order_id
-            }
-
-            return order_dict
+        try:
+            r = requests.get(url='https://espa.cr.usgs.gov/api/v1/order/{}'.format(order_id), auth=(username, password))
+        except BaseException as e:
+            self.logger.warning(str(e))
         else:
-            return False
+            response = r.json()
+
+            if r.status_code in [200, 201]:
+                order_dict = {
+                    "status" :response["status"],
+                    "inputs_list": response["product_opts"]["olitirs8_collection"]["inputs"],
+                    "order_date": response["order_date"],
+                    "note": response["note"],
+                    "order_id": order_id
+                }
+
+                return order_dict
+            else:
+                return False
 
     def cancel_order(self, order_id):
         username = self.username
@@ -1956,70 +1968,81 @@ class L8Downloader:
             "status": "cancelled"
         }
 
-        r = requests.put(url='https://espa.cr.usgs.gov/api/v1/order', json=data_payload, auth=(username, password))
-
-
-        response = r.json()
-
-        self.logger.debug(r.status_code)
-        self.logger.debug(response)
-
-        if r.status_code in [200, 201, 202]:
-
-            return True
+        try:
+            r = requests.put(url='https://espa.cr.usgs.gov/api/v1/order', json=data_payload, auth=(username, password))
+        except BaseException as e:
+            self.logger.warning(str(e))
         else:
-            return False
+            response = r.json()
+
+            self.logger.debug(r.status_code)
+            self.logger.debug(response)
+
+            if r.status_code in [200, 201, 202]:
+
+                return True
+            else:
+                return False
 
 
     def download_order(self, order_id, directory=None, verify=False):
         username = self.username
         password = self.password
-        r = requests.get(url='https://espa.cr.usgs.gov/api/v1/item-status/{}'.format(order_id), auth=(username, password))
 
-        response = r.json()
-
-        if r.status_code in [200, 201]:
-            # fill in download code here for each item
-            item_list = response[order_id]
-            final_list = []
-
-            for item in item_list:
-                download_url = item['product_dload_url']
-
-                r = requests.get(download_url, stream=True, timeout=60*60)
-
-                if directory:
-                    file_name = os.path.split(item['product_dload_url'])[1]
-                    final_list.append(file_name)
-                    file_path = os.path.join(directory, file_name)
-                else:
-                    file_name = os.path.split(item['product_dload_url'])[1]
-                    final_list.append(file_name)
-                    file_path = file_name
-
-                success = False
-                if not os.path.isfile(file_path):
-                    print(f'trying to download {file_path}')
-                    while not success:
-                        try:
-                            with open(file_path, 'wb') as f:
-                                for chunk in r.iter_content(chunk_size=1024):
-                                    if chunk: # filter out keep-alive new chunks
-                                        f.write(chunk)
-                        except Exception as e:
-                            print(f'bad thing happened, usgs is not cooperating {e}')
-                            os.remove(file_path)
-                            time.sleep(15)
-                        else:
-                            success = True
-                            time.sleep(10)
-
-                else:
-                    print('file to be downloaded already exists')
-
-            return (True, 'Downloading finished', final_list)
+        try:
+            r = requests.get(url='https://espa.cr.usgs.gov/api/v1/item-status/{}'.format(order_id), auth=(username, password))
+        except BaseException as e:
+            self.logger.warning(str(e))
         else:
-            return (False, 'Bad return from the server')
+            response = r.json()
+
+            if r.status_code in [200, 201]:
+                # fill in download code here for each item
+                item_list = response[order_id]
+                final_list = []
+
+                for item in item_list:
+                    download_url = item['product_dload_url']
+
+                    r = requests.get(download_url, stream=True, timeout=60*60)
+
+                    if directory:
+                        file_name = os.path.split(item['product_dload_url'])[1]
+                        final_list.append(file_name)
+                        file_path = os.path.join(directory, file_name)
+                    else:
+                        file_name = os.path.split(item['product_dload_url'])[1]
+                        final_list.append(file_name)
+                        file_path = file_name
+
+                    success = False
+                    if not os.path.isfile(file_path):
+                        self.logger.info(f'Trying to download {file_path}')
+                        attempts = 0
+                        while not success and attempts < self.max_attempts:
+                            try:
+                                with open(file_path, 'wb') as f:
+                                    for chunk in r.iter_content(chunk_size=1024):
+                                        if chunk: # filter out keep-alive new chunks
+                                            f.write(chunk)
+                            except Exception as e:
+                                self.logger.warning(f'Error occured, usgs is not cooperating {str(e)}')
+                                os.remove(file_path)
+                                time.sleep(30)
+                                attempts += 1
+                            else:
+                                success = True
+                                time.sleep(30)
+
+                        if attempts == self.max_attempts:
+                            self.logger.warning(f'Max attempts at file download reached, continuing without downloading {item}')
+
+                    else:
+                        self.logger.info('File to be downloaded already exists locally.')
+
+                return TaskStatus(True, 'Downloading finished', final_list)
+            else:
+                return TaskStatus(False, 'Bad return from the server')
 
     def check_if_products_exist(self, name_list, directory, type_of_product):
         # Create a copy of the list
@@ -2041,9 +2064,9 @@ class L8Downloader:
                 # Use a regex to match the converted product name
                 # If it is found, remove it from the list (if it isn't already)
                 if re.match(match_string, file_name):
-                    print('This product already exists in the download folder.')
+                    self.logger.info('This product already exists in the download folder.')
                     if product_name in not_exist_set:
-                        print('Removing {} from products to order.'.format(product_name))
+                        self.logger.info(f'Removing {product_name} from products to order.')
                         not_exist_set.remove(product_name)
 
         return not_exist_set

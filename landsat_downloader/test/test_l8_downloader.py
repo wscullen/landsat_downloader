@@ -200,10 +200,9 @@ class TestL8Downloader(unittest.TestCase):
 
         self.assertIsNotNone(dl_obj)
 
-
     def test_search_for_products_polygon_to_tiles_sentinel3(self):
 
-        config_path = Path(TEST_DIR, "test_data", "l8downloader.config.json")
+        config_path = Path(TEST_DIR, "test_data", "config.yaml")
 
         downloader_obj = l8_downloader.L8Downloader(config_path)
 
@@ -218,7 +217,7 @@ class TestL8Downloader(unittest.TestCase):
         self.assertTrue(True)
 
     def test_search_for_products_polygon_to_tiles_abagextent(self):
-        config_path = Path(TEST_DIR, "test_data", "l8downloader.config.json")
+        config_path = Path(TEST_DIR, "test_data", "config.yaml")
 
         downloader_obj = l8_downloader.L8Downloader(config_path)
 
@@ -233,7 +232,7 @@ class TestL8Downloader(unittest.TestCase):
         self.assertTrue(True)
 
     def test_search_for_products_polygon_to_tiles_sentinel2(self):
-        config_path = Path(TEST_DIR, "test_data", "l8downloader.config.json")
+        config_path = Path(TEST_DIR, "test_data", "config.yaml")
 
         downloader_obj = l8_downloader.L8Downloader(config_path)
 
@@ -257,7 +256,7 @@ class TestL8Downloader(unittest.TestCase):
 
     @timeit
     def test_get_dataset_metadata_info_sentinel2(self):
-        config_path = Path(TEST_DIR, "test_data", "l8downloader.config.json")
+        config_path = Path(TEST_DIR, "test_data", "config.yaml")
 
         downloader_obj = l8_downloader.L8Downloader(config_path)
 
@@ -274,7 +273,7 @@ class TestL8Downloader(unittest.TestCase):
             json_results = json.load(json_file)
 
         print(json_results)
-        config_path = Path(TEST_DIR, "test_data", "l8downloader.config.json")
+        config_path = Path(TEST_DIR, "test_data", "config.yaml")
 
         downloader_obj = l8_downloader.L8Downloader(config_path)
 
@@ -297,7 +296,7 @@ class TestL8Downloader(unittest.TestCase):
         with open(self.path_to_intermediate_query_results_usgs_ee, "r") as json_file:
             json_results = json.load(json_file)
 
-        config_path = Path(TEST_DIR, "test_data", "l8downloader.config.json")
+        config_path = Path(TEST_DIR, "test_data", "config.yaml")
         downloader_obj = l8_downloader.L8Downloader(config_path)
 
         data_results = json_results["data"]["results"]
@@ -314,7 +313,7 @@ class TestL8Downloader(unittest.TestCase):
 
     @timeit
     def test_search_for_products_by_tile(self):
-        config_path = Path(TEST_DIR, "test_data", "l8downloader.config.json")
+        config_path = Path(TEST_DIR, "test_data", "config.yaml")
         downloader_obj = l8_downloader.L8Downloader(config_path)
         results = downloader_obj.search_for_products_by_tile(
             self.SENTINEL2_DATASET_NAME,
@@ -327,7 +326,7 @@ class TestL8Downloader(unittest.TestCase):
         self.assertEqual(len(results), 12)
 
     def test_alberta_ag_extent(self):
-        config_path = Path(TEST_DIR, "test_data", "l8downloader.config.json")
+        config_path = Path(TEST_DIR, "test_data", "config.yaml")
         downloader_obj = l8_downloader.L8Downloader(config_path)
         results = downloader_obj.search_for_products_polygon_to_tiles(
             self.SENTINEL2_DATASET_NAME,
@@ -340,7 +339,7 @@ class TestL8Downloader(unittest.TestCase):
 
     @timeit
     def test_search_for_products_by_tile_detailed(self):
-        config_path = Path(TEST_DIR, "test_data", "l8downloader.config.json")
+        config_path = Path(TEST_DIR, "test_data", "config.yaml")
         downloader_obj = l8_downloader.L8Downloader(config_path)
         results = downloader_obj.search_for_products_by_tile(
             self.SENTINEL2_DATASET_NAME,
@@ -354,7 +353,7 @@ class TestL8Downloader(unittest.TestCase):
 
     @timeit
     def test_search_for_products_by_tile_not_detailed(self):
-        config_path = Path(TEST_DIR, "test_data", "l8downloader.config.json")
+        config_path = Path(TEST_DIR, "test_data", "config.yaml")
         downloader_obj = l8_downloader.L8Downloader(config_path)
 
         results = downloader_obj.search_for_products_by_tile(
