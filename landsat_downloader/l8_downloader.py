@@ -2021,6 +2021,7 @@ class L8Downloader:
                         attempts = 0
                         while not success and attempts < self.max_attempts:
                             try:
+                                attempts += 1
                                 with open(file_path, 'wb') as f:
                                     for chunk in r.iter_content(chunk_size=1024):
                                         if chunk: # filter out keep-alive new chunks
@@ -2029,20 +2030,19 @@ class L8Downloader:
                                 self.logger.warning(f'Error occured, usgs is not cooperating {str(e)}')
                                 os.remove(file_path)
                                 time.sleep(30)
-                                attempts += 1
                             else:
                                 success = True
                                 time.sleep(30)
 
                         if attempts == self.max_attempts:
                             self.logger.warning(f'Max attempts at file download reached, continuing without downloading {item}')
-
+                            return TaskStatus(False, 'Max attempts reached. Try again later.', None)
                     else:
                         self.logger.info('File to be downloaded already exists locally.')
 
                 return TaskStatus(True, 'Downloading finished', final_list)
             else:
-                return TaskStatus(False, 'Bad return from the server')
+                return TaskStatus(False, 'Bad return from the server', None)
 
     def check_if_products_exist(self, name_list, directory, type_of_product):
         # Create a copy of the list

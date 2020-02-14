@@ -15,6 +15,7 @@ Generate a csv lookup from WRS to MGRS:
 ## Install GDAL
 
 Make sure GDAL 2.X is installed on the system, and then while in your pipenv environment, run:
+
 ```
 pip install --global-option=build_ext --global-option="-I/usr/include/gdal" GDAL==`gdal-config --version`
 ```
@@ -32,4 +33,13 @@ Shapefiles for the WRS and MGRS grids are required to lookup and convert between
 `grid_files` and `data` directories goes under the main project directory, `test_data` directory goes under the `test` directory in the main project directory.
 
 ## Env Vars for USGS EE Auth
+
 Make sure to set USGS_EE_USERNAME and USGS_EE_PASSWORD to the usernamd and password that you use to access USGS EE.
+
+## Install Directly From Github
+
+`python3.7 -m pip install git+https://sscullen:$GITHUB_PAT@github.com/sscullen/landsat_downloader.git#egg=landsat_downloader`
+
+or to upgrade:
+
+`python3.7 -m pip install --upgrade git+https://sscullen:$GITHUB_PAT@github.com/sscullen/landsat_downloader.git#egg=landsat_downloader`
