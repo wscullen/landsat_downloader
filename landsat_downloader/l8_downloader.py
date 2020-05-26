@@ -68,6 +68,7 @@ import typing
 from typing import Dict, Tuple, List, Optional
 import queue
 import yaml
+from pathlib import Path
 
 from geomet import wkt
 
@@ -1610,38 +1611,67 @@ class L8Downloader:
             else:
                 self.logger.warning(f"There was a problem getting download urls, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}")
 
-    def download_file(self, filename, url, id=0):
+    def download_file(self, filename, url, callback=None):
         # NOTE the stream=True parameter
 
         # self.check_auth() Since auth is baked into the url passed back from get
         # download url, the auth check is unnecessary
         self.logger.info('Trying to download the file...')
+
+        full_file_path = filename
+
+        self.logger.info(f"Url created: {url}")
+        self.logger.info(f"Full file path: {full_file_path}")
+
         try:
-            r = requests.get(url, stream=True, timeout=60*60)
+            r = requests.get(url, stream=True, timeout=2 * 60)
         
         except BaseException as e:
             self.logger.warning(str(e))
             return TaskStatus(False, 'An exception occured while trying to download.', e)
         else:
 
-            self.logger.info(f'Response status code: {r.status_code}')
+            self.logger.debug(f"Response status code: {r.status_code}")
 
-            if not os.path.isfile(filename):
+            file_size = int(r.headers["Content-Length"])
+            transfer_progress = 0
+            chunk_size = 10000
+
+            previous_update = 0
+            update_throttle_threshold = 1  # Update every percent change
+
+            if not os.path.isfile(full_file_path):
                 try:
-
-                    transfer = TransferMonitor(filename, id)
-                    with open(filename, 'wb') as f:
-                        for chunk in r.iter_content(chunk_size=1000000):
+                    with open(full_file_path, "wb") as f:
+                        for chunk in r.iter_content(chunk_size=chunk_size):
                             f.write(chunk)
+                            transfer_progress += chunk_size
+                            transfer_percent = round(
+                                min(100, (transfer_progress / file_size) * 100), 2
+                            )
+                            self.logger.debug(
+                                f"Progress: {transfer_progress},  {transfer_percent:.2f}%"
+                            )
+                            if (
+                                transfer_percent - previous_update
+                            ) > update_throttle_threshold:
+                                if callback:
+                                    callback(transfer_progress, file_size, transfer_percent)
+                                
+                                previous_update = transfer_percent
 
                 except BaseException as e:
-                    transfer.finish()
-                    return TaskStatus(False, 'An exception occured while trying to download.', e)
+                    return TaskStatus(
+                        False, "An exception occured while trying to download.", e
+                    )
                 else:
-                    transfer.finish()
-                    return TaskStatus(True, 'Download successful', filename)
+                    return TaskStatus(True, "Download successful", str(full_file_path))
             else:
-                return TaskStatus(False, 'Requested file to download already exists.', filename)
+                return TaskStatus(
+                    True,
+                    "Requested file to download already exists.",
+                    str(full_file_path),
+                )
 
     def search_dataset_fields(self, dataset_name):
         """
@@ -1757,7 +1787,7 @@ class L8Downloader:
             # self.logger.debug('Writing final job status...')
             tqdm.tqdm.write('All tasks completed!')
 
-    def download_product(self, product_dict, product_type, directory=None, id=0, auth_token=None):
+    def download_product(self, product_dict, product_type, directory=None, id=0, auth_token=None, callback=None):
         """
             Get the download url for a given entity_id and product type
 
@@ -1798,7 +1828,7 @@ class L8Downloader:
             if download_url:
                 self.logger.info('Found download url okay, downloading file...')
                 # download_file returns a TaskStatus named tuple
-                result = self.download_file(file_name, download_url[0]['url'], id)
+                result = self.download_file(file_name, download_url[0]['url'], id, callback=callback)
 
                 if result.status and os.path.isfile(file_name):
                     return result
