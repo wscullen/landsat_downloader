@@ -1635,7 +1635,7 @@ class L8Downloader:
 
             file_size = int(r.headers["Content-Length"])
             transfer_progress = 0
-            chunk_size = 10000
+            chunk_size = 1024 * 1024
 
             previous_update = 0
             update_throttle_threshold = 1  # Update every percent change
@@ -1652,15 +1652,19 @@ class L8Downloader:
                             self.logger.debug(
                                 f"Progress: {transfer_progress},  {transfer_percent:.2f}%"
                             )
+
+                            self.logger.debug(str(transfer_percent - previous_update))
                             if (
                                 transfer_percent - previous_update
                             ) > update_throttle_threshold:
                                 if callback:
+                                    self.logger.debug('Calling task update state callback')
                                     callback(transfer_progress, file_size, transfer_percent)
                                 
                                 previous_update = transfer_percent
 
                 except BaseException as e:
+                    self.logger.debug(str(e))
                     return TaskStatus(
                         False, "An exception occured while trying to download.", e
                     )
@@ -1828,12 +1832,12 @@ class L8Downloader:
             if download_url:
                 self.logger.info('Found download url okay, downloading file...')
                 # download_file returns a TaskStatus named tuple
-                result = self.download_file(file_name, download_url[0]['url'], id, callback=callback)
-
-                if result.status and os.path.isfile(file_name):
-                    return result
-                else:
-                    return TaskStatus(False, 'The download file cannot be found', None)
+                result = self.download_file(file_name, download_url[0]['url'], callback=callback)
+                return result
+                # if result.status and os.path.isfile(file_name):
+                #     return result
+                # else:
+                #     return TaskStatus(False, 'The download file cannot be found', None)
             else:
                 # Return a TaskStatus named tuple
                 #return (False, 'Download URL could not be determined', None)
@@ -1862,6 +1866,8 @@ class L8Downloader:
                 "inputs": ['2483642'],
             }
         }
+
+        product_list: list of dicts, with "name" and "job_id"
         """
 
         username = self.username
@@ -1926,20 +1932,25 @@ class L8Downloader:
         password = self.password
 
         try:
-            r = requests.get(url='https://espa.cr.usgs.gov/api/v1/list-orders', auth=(username, password))
+            r = requests.get(url='https://espa.cr.usgs.gov/api/v1/list-orders', auth=(username, password), timeout=60*2)
         except BaseException as e:
             self.logger.warning(str(e))
             return False
         else:
             if r.status_code == 200:
                 response = r.json()
+                self.logger.info(response)
                 if len(response) != 0:
                     products_list = []
                     for order_id in response:
+                        self.logger.info(order_id)
                         order_dict = self.get_order_entity_ids(order_id)
-                        if order_dict['status'] in ['ordered', 'completed']:
-                            self.logger.info(f"ORDER ID: {order_id}, Info: {order_dict}")
-                            products_list.append(order_dict)
+                        if order_dict:
+                            if order_dict['status'] in ['ordered', 'completed']:
+                                self.logger.info(f"ORDER ID: {order_id}, Info: {order_dict}")
+                                products_list.append(order_dict)
+                        else:
+                            self.logger.info("unable to find order info")
 
                     return products_list
             else:
@@ -1950,7 +1961,7 @@ class L8Downloader:
         username = self.username
         password = self.password
         try:
-            r = requests.get(url='https://espa.cr.usgs.gov/api/v1/order-status/{}'.format(order_id), auth=(username, password))
+            r = requests.get(url='https://espa.cr.usgs.gov/api/v1/order-status/{}'.format(order_id), auth=(username, password), timeout=60*5)
         except BaseException as e:
             self.logger.warning(str(e))
         else:
@@ -2015,23 +2026,26 @@ class L8Downloader:
                 return False
 
 
-    def download_order(self, order_id, directory=None, verify=False):
+    def download_order(self, order_id, directory=None, verify=False, callback=None):
         username = self.username
         password = self.password
 
         try:
-            r = requests.get(url='https://espa.cr.usgs.gov/api/v1/item-status/{}'.format(order_id), auth=(username, password))
+            order_response = requests.get(url='https://espa.cr.usgs.gov/api/v1/item-status/{}'.format(order_id), auth=(username, password))
         except BaseException as e:
             self.logger.warning(str(e))
         else:
-            response = r.json()
+            response_json = order_response.json()
 
-            if r.status_code in [200, 201]:
+            if order_response.status_code in [200, 201]:
                 # fill in download code here for each item
-                item_list = response[order_id]
+                item_list = response_json[order_id]
                 final_list = []
 
+                item_progress_dict = {}
+
                 for item in item_list:
+                    self.logger.info(item)
                     download_url = item['product_dload_url']
 
                     r = requests.get(download_url, stream=True, timeout=60*60)
@@ -2046,16 +2060,43 @@ class L8Downloader:
                         file_path = file_name
 
                     success = False
+                    
                     if not os.path.isfile(file_path):
                         self.logger.info(f'Trying to download {file_path}')
                         attempts = 0
+                        
+                        file_size = int(r.headers["Content-Length"])
+                        transfer_progress = 0
+                        chunk_size = 1024 * 1024
+
+                        previous_update = 0
+                        update_throttle_threshold = 1  # Update every percent change
+                        
                         while not success and attempts < self.max_attempts:
                             try:
                                 attempts += 1
                                 with open(file_path, 'wb') as f:
-                                    for chunk in r.iter_content(chunk_size=1024):
+                                    for chunk in r.iter_content(chunk_size=chunk_size):
                                         if chunk: # filter out keep-alive new chunks
                                             f.write(chunk)
+                                            transfer_progress += chunk_size
+                                            transfer_percent = round(
+                                                min(100, (transfer_progress / file_size) * 100), 2
+                                            )
+                                            self.logger.debug(
+                                                f"Progress: {transfer_progress},  {transfer_percent:.2f}%"
+                                            )
+
+                                            self.logger.debug(str(transfer_percent - previous_update))
+                                            if (
+                                                transfer_percent - previous_update
+                                            ) > update_throttle_threshold:
+                                                if callback:
+                                                    self.logger.debug('Calling task update state callback')
+                                                    item_progress_dict[item["name"]] = {"file_size": file_size, "download": transfer_percent}
+                                                    callback(item_progress_dict)
+                                                
+                                                previous_update = transfer_percent
                             except Exception as e:
                                 self.logger.warning(f'Error occured, usgs is not cooperating {str(e)}')
                                 os.remove(file_path)
