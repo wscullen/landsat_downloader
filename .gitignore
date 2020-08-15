@@ -11,8 +11,11 @@ intersecting*
 *.csv
 .vscode/
 config.json
+config.yaml
 authcache.json
+authcache.yaml
 test/test_data/*
 .env
 Pipfile.lock
 *.pyc
+*.log

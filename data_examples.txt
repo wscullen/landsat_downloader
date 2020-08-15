@@ -1,0 +1,1081 @@
+{ "type": "Polygon", "coordinates": [ [ [ -112.7795, 49.9322 ], [ -112.4311, 49.9310 ], [ -112.4293, 49.6083 ], [ -112.7749, 49.6119 ], [ -112.7768, 49.6843 ], [ -112.7795, 49.9322 ] ] ] }
+
+"POLYGON ((-112.779560139759 49.9322755036624,-112.43113789372 49.9310950848153,-112.429304092425 49.6083528528694,-112.774975636522 49.6119176810512,-112.776809437817 49.6843459850472,-112.779560139759 49.9322755036624))"
+
+scene search results, metadata full
+
+
+{
+            "browse":[
+               {
+                  "id":"5e83d0b86f2c3061",
+                  "browseRotationEnabled":"None",
+                  "browseName":"LandsatLook Natural Color Preview Image",
+                  "browsePath":"https://ims.cr.usgs.gov/browse/landsat_8_c1/2020/041/026/LC08_L1GT_041026_20200329_20200409_01_T2.jpg",
+                  "overlayPath":"https://ims.cr.usgs.gov/wms/landsat_8_c1?sceneId=lc80410262020089lgn00",
+                  "overlayType":"dmid_wms",
+                  "thumbnailPath":"https://ims.cr.usgs.gov/thumbnail/landsat_8_c1/2020/041/026/LC08_L1GT_041026_20200329_20200409_01_T2.jpg"
+               },
+               {
+                  "id":"5e83d0b85da62c02",
+                  "browseRotationEnabled":"None",
+                  "browseName":"LandsatLook Thermal Preview Image",
+                  "browsePath":"https://ims.cr.usgs.gov/browse/landsat_8_c1/2020/041/026/LC08_L1GT_041026_20200329_20200409_01_T2_TIR.jpg",
+                  "overlayPath":"https://ims.cr.usgs.gov/wms/landsat_8_c1?sceneId=lc80410262020089lgn00_tir",
+                  "overlayType":"dmid_wms",
+                  "thumbnailPath":"https://ims.cr.usgs.gov/thumbnail/landsat_8_c1/2020/041/026/LC08_L1GT_041026_20200329_20200409_01_T2_TIR.jpg"
+               },
+               {
+                  "id":"5e83d0b8b814a0e6",
+                  "browseRotationEnabled":"None",
+                  "browseName":"LandsatLook Quality Preview Image",
+                  "browsePath":"https://ims.cr.usgs.gov/browse/landsat_8_c1/2020/041/026/LC08_L1GT_041026_20200329_20200409_01_T2_QB.jpg",
+                  "overlayPath":"https://ims.cr.usgs.gov/wms/landsat_8_c1?sceneId=lc80410262020089lgn00_qb",
+                  "overlayType":"dmid_wms",
+                  "thumbnailPath":"https://ims.cr.usgs.gov/thumbnail/landsat_8_c1/2020/041/026/LC08_L1GT_041026_20200329_20200409_01_T2_QB.jpg"
+               }
+            ],
+            "cloudCover":"93.58",
+            "entityId":"LC80410262020089LGN00",
+            "displayId":"LC08_L1GT_041026_20200329_20200409_01_T2",
+            "orderingId":"None",
+            "metadata":[
+               {
+                  "id":"5e83d0b82af07b21",
+                  "fieldName":"Landsat Product Identifier",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_c2_dictionary.html#landsat_product_id",
+                  "value":"LC08_L1GT_041026_20200329_20200409_01_T2"
+               },
+               {
+                  "id":"5e83d0b88275745",
+                  "fieldName":"Landsat Scene Identifier",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_c2_dictionary.html#landsat_scene_id",
+                  "value":"LC80410262020089LGN00"
+               },
+               {
+                  "id":"5e83d0b92ff6b5e8",
+                  "fieldName":"Acquisition Date",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_c2_dictionary.html#acquisition_date",
+                  "value":"2020/03/29"
+               },
+               {
+                  "id":"5e83d0b9332fd122",
+                  "fieldName":"Collection Category",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_c2_dictionary.html#acquisition_date",
+                  "value":"T2"
+               },
+               {
+                  "id":"5e83d0b9948e2596",
+                  "fieldName":"Collection Number",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_c2_dictionary.html#acquisition_date",
+                  "value":1
+               },
+               {
+                  "id":"5e83d0b922c5f981",
+                  "fieldName":"WRS Path",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_c2_dictionary.html#acquisition_date",
+                  "value":" 041"
+               },
+               {
+                  "id":"5e83d0b94328e34e",
+                  "fieldName":"WRS Row",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_c2_dictionary.html#acquisition_date",
+                  "value":" 026"
+               },
+               {
+                  "id":"5e83d0b9a34ebe01",
+                  "fieldName":"Target WRS Path",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_c2_dictionary.html#acquisition_date",
+                  "value":" 041"
+               },
+               {
+                  "id":"5e83d0b8852f2e23",
+                  "fieldName":"Target WRS Row",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_c2_dictionary.html#acquisition_date",
+                  "value":" 026"
+               },
+               {
+                  "id":"5e83d0b9173b715a",
+                  "fieldName":"Nadir/Off Nadir",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_c2_dictionary.html#acquisition_date",
+                  "value":"NADIR"
+               },
+               {
+                  "id":"5e83d0b820eaa311",
+                  "fieldName":"Roll Angle",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#roll_angle",
+                  "value":"-0.001"
+               },
+               {
+                  "id":"5e83d0b8379c9dae",
+                  "fieldName":"Date L-1 Generated",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#date_l1_generated",
+                  "value":"2020/04/09"
+               },
+               {
+                  "id":"5e83d0b9a78d1dbe",
+                  "fieldName":"Start Time",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#start_time",
+                  "value":"2020:089:18:23:48.6043930"
+               },
+               {
+                  "id":"5e83d0b887e40f8e",
+                  "fieldName":"Stop Time",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#stop_time",
+                  "value":"2020:089:18:24:20.3743920"
+               },
+               {
+                  "id":"5e83d0b926d7d304",
+                  "fieldName":"Station Identifier",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#distribution_site",
+                  "value":"LGN"
+               },
+               {
+                  "id":"5e83d0b91ad332e3",
+                  "fieldName":"Day/Night Indicator",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#day_or_night",
+                  "value":"DAY"
+               },
+               {
+                  "id":"5e83d0b864f5722e",
+                  "fieldName":"Land Cloud Cover",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#cloud_cover_land",
+                  "value":"93.58"
+               },
+               {
+                  "id":"5e83d0b92e9d1b11",
+                  "fieldName":"Scene Cloud Cover",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#cloud_cover",
+                  "value":"93.58"
+               },
+               {
+                  "id":"5e83d0b991213d01",
+                  "fieldName":"Ground Control Points Model",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#ground_control_points_model",
+                  "value":-1
+               },
+               {
+                  "id":"5e83d0b9e4a26b2a",
+                  "fieldName":"Ground Control Points Version",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#ground_control_points_version",
+                  "value":4
+               },
+               {
+                  "id":"5e83d0b9bb19d4cc",
+                  "fieldName":"Geometric RMSE Model (meters)",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#geometric_rmse_model",
+                  "value":"0.000"
+               },
+               {
+                  "id":"5e83d0b8f922f1d3",
+                  "fieldName":"Geometric RMSE Model X",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#geometric_rmse_model_x",
+                  "value":"0.000"
+               },
+               {
+                  "id":"5e83d0b93b83213d",
+                  "fieldName":"Geometric RMSE Model Y",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#geometric_rmse_model_y",
+                  "value":"0.000"
+               },
+               {
+                  "id":"5e83d0b9c9fa1556",
+                  "fieldName":"Image Quality",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#image_quality_landsat_8",
+                  "value":9
+               },
+               {
+                  "id":"5e83d0b8a926bb3e",
+                  "fieldName":"Processing Software Version",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#processing_software_version",
+                  "value":"LPGS_13.1.0"
+               },
+               {
+                  "id":"5e83d0b84092b361",
+                  "fieldName":"Sun Elevation L1",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#sun_elevation",
+                  "value":"42.17130051"
+               },
+               {
+                  "id":"5e83d0b8bf763033",
+                  "fieldName":"Sun Azimuth L1",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#sun_azimuth",
+                  "value":"154.45524667"
+               },
+               {
+                  "id":"5e83d0b97cb734c3",
+                  "fieldName":"TIRS SSM Model",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#tirs_ssm_model",
+                  "value":"FINAL"
+               },
+               {
+                  "id":"5e83d0b861614fa4",
+                  "fieldName":"Data Type Level-1",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#data_type_l1",
+                  "value":"OLI_TIRS_L1GT"
+               },
+               {
+                  "id":"5e83d0b993a4fa4a",
+                  "fieldName":"Sensor Identifier",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#sensor_id ",
+                  "value":"OLI_TIRS"
+               },
+               {
+                  "id":"5e83d0b9de23d772",
+                  "fieldName":"Panchromatic Lines",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#panchromatic_lines",
+                  "value":16241
+               },
+               {
+                  "id":"5e83d0b8100f0577",
+                  "fieldName":"Panchromatic Samples",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#panchromatic_samples",
+                  "value":16041
+               },
+               {
+                  "id":"5e83d0b92bc96899",
+                  "fieldName":"Reflective Lines",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#reflective_lines",
+                  "value":8121
+               },
+               {
+                  "id":"5e83d0b8bbb70baf",
+                  "fieldName":"Reflective 
+Samples",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#reflective_samples",
+                  "value":8021
+               },
+               {
+                  "id":"5e83d0b955642ca4",
+                  "fieldName":"Thermal Lines",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#thermal_lines",
+                  "value":8121
+               },
+               {
+                  "id":"5e83d0b96b1a0d35",
+                  "fieldName":"Thermal Samples",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#thermal_samples",
+                  "value":8021
+               },
+               {
+                  "id":"5e83d0b9104800de",
+                  "fieldName":"Map Projection Level-1",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#map_projection_l1",
+                  "value":"UTM"
+               },
+               {
+                  "id":"5e83d0b9fb0dce2d",
+                  "fieldName":"UTM Zone",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#utm_zone",
+                  "value":12
+               },
+               {
+                  "id":"5e83d0b8fd64f557",
+                  "fieldName":"Datum",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#datum",
+                  "value":"WGS84"
+               },
+               {
+                  "id":"5e83d0b84cc2632e",
+                  "fieldName":"Ellipsoid",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#ellipsoid",
+                  "value":"WGS84"
+               },
+               {
+                  "id":"5e83d0b98f651440",
+                  "fieldName":"Grid Cell Size Panchromatic",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#grid_cell_size_panchromatic",
+                  "value":"15.00"
+               },
+               {
+                  "id":"5e83d0b9c6eaa87d",
+                  "fieldName":"Grid Cell Size Reflective",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#grid_cell_size_reflective",
+                  "value":"30.00"
+               },
+               {
+                  "id":"5e83d0b8c810ced",
+                  "fieldName":"Grid Cell Size Thermal",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#grid_cell_size_thermal",
+                  "value":"30.00"
+               },
+               {
+                  "id":"5e83d0b8a40bafa4",
+                  "fieldName":"Bias Parameter File Name OLI",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#bpf_name_oli",
+                  "value":"LO8BPF20200329181106_20200329185918.01"
+               },
+               {
+                  "id":"5e83d0b964a91d93",
+                  "fieldName":"Bias Parameter File Name TIRS",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#bpf_name_tirs",
+                  "value":"LT8BPF20200324105529_20200408094759.01"
+               },
+               {
+                  "id":"5e83d0b9b5d81214",
+                  "fieldName":"Calibration Parameter File",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#cpf_name",
+                  "value":"LC08CPF_20200101_20200331_01.04"
+               },
+               {
+                  "id":"5e83d0b9c67b22a3",
+                  "fieldName":"RLUT File Name",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#rlut_file_name",
+                  "value":"LC08RLUT_20150303_20431231_01_12.h5"
+               },
+               {
+                  "id":"5e83d0b9a610a996",
+                  "fieldName":"Center Latitude",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_degrees",
+                  "value":"48&deg;51\\'58.43\"N"
+               },
+               {
+                  "id":"5e83d0b94fad23df",
+                  "fieldName":"Center Longitude",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_degrees",
+                  "value":"113&deg;33\\'29.45\"W"
+               },
+               {
+                  "id":"5e83d0b9c1d54551",
+                  "fieldName":"UL Corner Lat",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_degrees",
+                  "value":"49&deg;54\\'24.59\"N"
+               },
+               {
+                  "id":"5e83d0b8d91068e",
+                  "fieldName":"UL Corner Long",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_degrees",
+                  "value":"115&deg;17\\'24.18\"W"
+               },
+               {
+                  "id":"5e83d0b94ff6f17e",
+                  "fieldName":"UR Corner Lat",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_degrees",
+                  "value":"49&deg;58\\'56.71\"N"
+               },
+               {
+                  "id":"5e83d0b9a76119fe",
+                  "fieldName":"UR Corner Long",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_degrees",
+                  "value":"111&deg;56\\'24.43\"W"
+               },
+               {
+                  "id":"5e83d0b9f29120e3",
+                  "fieldName":"LL Corner Lat",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_degrees",
+                  "value":"47&deg;43\\'16.72\"N"
+               },
+               {
+                  "id":"5e83d0b988d2162b",
+                  "fieldName":"LL Corner Long",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_degrees",
+                  "value":"115&deg;06\\'25.92\"W"
+               },
+               {
+                  "id":"5e83d0b96162233",
+                  "fieldName":"LR Corner Lat",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_degrees",
+                  "value":"47&deg;47\\'28.79\"N"
+               },
+               {
+                  "id":"5e83d0b894a09772",
+                  "fieldName":"LR Corner Long",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_degrees",
+                  "value":"111&deg;53\\'59.71\"W"
+               },
+               {
+                  "id":"5e83d0b87f203a10",
+                  "fieldName":"Center Latitude dec",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_decimal",
+                  "value":"48.86623"
+               },
+               {
+                  "id":"5e83d0b9b2a9a299",
+                  "fieldName":"Center Longitude dec",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_decimal",
+                  "value":"-113.55818"
+               },
+               {
+                  "id":"5e83d0b8bc51bf5b",
+                  "fieldName":"UL Corner Lat dec",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_decimal",
+                  "value":"49.90683"
+               },
+               {
+                  "id":"5e83d0b95071b3bf",
+                  "fieldName":"UL Corner Long dec",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_decimal",
+                  "value":"-115.29005"
+               },
+               {
+                  "id":"5e83d0b9842b0429",
+                  "fieldName":"UR Corner Lat dec",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_decimal",
+                  "value":"49.98242"
+               },
+               {
+                  "id":"5e83d0b931a16a9",
+                  "fieldName":"UR Corner Long dec",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_decimal",
+                  "value":"-111.94012"
+               },
+               {
+                  "id":"5e83d0b8abad8ec9",
+                  "fieldName":"LL Corner Lat dec",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_decimal",
+                  "value":"47.72131"
+               },
+               {
+                  "id":"5e83d0b92a9532e0",
+                  "fieldName":"LL Corner Long dec",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_decimal",
+                  "value":"-115.10720"
+               },
+               {
+                  "id":"5e83d0b834fea374",
+                  "fieldName":"LR Corner Lat dec",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_decimal",
+                  "value":"47.79133"
+               },
+               {
+                  "id":"5e83d0b9f619dbbe",
+                  "fieldName":"LR Corner Long dec",
+                  "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_decimal",
+                  "value":"-111.89992"
+               }
+            ],
+            "options":{
+               "bulk":True,
+               "download":True,
+               "order":True,
+               "secondary":False
+            },
+            "selected":{
+               "bulk":False,
+               "compare":False,
+               "order":False
+            },
+            "spatialBounds":{
+               "type":"Polygon",
+               "coordinates":[
+                  [
+                     [
+                        -115.29005,
+                        47.72131
+                     ],
+                     [
+                        -115.29005,
+                        49.98242
+                     ],
+                     [
+                        -111.89992,
+                        49.98242
+                     ],
+                     [
+                        -111.89992,
+                        47.72131
+                     ],
+                     [
+                        -115.29005,
+                        47.72131
+                     ]
+                  ]
+               ]
+            },
+            "spatialCoverage":{
+               "type":"Polygon",
+               "coordinates":[
+                  [
+                     [
+                        -115.1072,
+                        47.72131
+                     ],
+                     [
+                        -111.89992,
+                        47.79133
+                     ],
+                     [
+                        -111.94012,
+                        49.98242
+                     ],
+                     [
+                        -115.29005,
+                        49.90683
+                     ],
+                     [
+                        -115.1072,
+                        47.72131
+                     ]
+                  ]
+               ]
+            },
+            "temporalCoverage":{
+               "endDate":"2020-03-29 00:00:00",
+               "startDate":"2020-03-29 00:00:00"
+            },
+            "publishDate":"2020-03-29 18:11:47"
+         }
+
+Scene search result, metadata "summary"
+
+                    {
+            "browse":[
+               {
+                  "id":"5e83d0b86f2c3061",
+                  "browseRotationEnabled":"None",
+                  "browseName":"LandsatLook Natural Color Preview Image",
+                  "browsePath":"https://ims.cr.usgs.gov/browse/landsat_8_c1/2020/041/026/LC08_L1GT_041026_20200329_20200409_01_T2.jpg",
+                  "overlayPath":"https://ims.cr.usgs.gov/wms/landsat_8_c1?sceneId=lc80410262020089lgn00",
+                  "overlayType":"dmid_wms",
+                  "thumbnailPath":"https://ims.cr.usgs.gov/thumbnail/landsat_8_c1/2020/041/026/LC08_L1GT_041026_20200329_20200409_01_T2.jpg"
+               },
+               {
+                  "id":"5e83d0b85da62c02",
+                  "browseRotationEnabled":"None",
+                  "browseName":"LandsatLook Thermal Preview Image",
+                  "browsePath":"https://ims.cr.usgs.gov/browse/landsat_8_c1/2020/041/026/LC08_L1GT_041026_20200329_20200409_01_T2_TIR.jpg",
+                  "overlayPath":"https://ims.cr.usgs.gov/wms/landsat_8_c1?sceneId=lc80410262020089lgn00_tir",
+                  "overlayType":"dmid_wms",
+                  "thumbnailPath":"https://ims.cr.usgs.gov/thumbnail/landsat_8_c1/2020/041/026/LC08_L1GT_041026_20200329_20200409_01_T2_TIR.jpg"
+               },
+               {
+                  "id":"5e83d0b8b814a0e6",
+                  "browseRotationEnabled":"None",
+                  "browseName":"LandsatLook Quality Preview Image",
+                  "browsePath":"https://ims.cr.usgs.gov/browse/landsat_8_c1/2020/041/026/LC08_L1GT_041026_20200329_20200409_01_T2_QB.jpg",
+                  "overlayPath":"https://ims.cr.usgs.gov/wms/landsat_8_c1?sceneId=lc80410262020089lgn00_qb",
+                  "overlayType":"dmid_wms",
+                  "thumbnailPath":"https://ims.cr.usgs.gov/thumbnail/landsat_8_c1/2020/041/026/LC08_L1GT_041026_20200329_20200409_01_T2_QB.jpg"
+               }
+            ],
+            "cloudCover":"93.58",
+            "entityId":"LC80410262020089LGN00",
+            "displayId":"LC08_L1GT_041026_20200329_20200409_01_T2",
+            "orderingId":"None",
+            "metadata":[
+               {
+                  "id":"5e83d0b8f7b2edca",
+                  "fieldName":"ID",
+                  "dictionaryLink":"None",
+                  "value":"LC08_L1GT_041026_20200329_20200409_01_T2"
+               },
+               {
+                  "id":"5e83d0b8a2e89d95",
+                  "fieldName":"Acquisition Date",
+                  "dictionaryLink":"None",
+                  "value":"2020-03-29"
+               },
+               {
+                  "id":"5e83d0b8aba026c7",
+                  "fieldName":"Path",
+                  "dictionaryLink":"None",
+                  "value":41
+               },
+               {
+                  "id":"5e83d0b86873e8d7",
+                  "fieldName":"Row",
+                  "dictionaryLink":"None",
+                  "value":26
+               }
+            ],
+            "options":{
+               "bulk":True,
+               "download":True,
+               "order":True,
+               "secondary":False
+            },
+            "selected":{
+               "bulk":False,
+               "compare":False,
+               "order":False
+            },
+            "spatialBounds":{
+               "type":"Polygon",
+               "coordinates":[
+                  [
+                     [
+                        -115.29005,
+                        47.72131
+                     ],
+                     [
+                        -115.29005,
+                        49.98242
+                     ],
+                     [
+                        -111.89992,
+                        49.98242
+                     ],
+                     [
+                        -111.89992,
+                        47.72131
+                     ],
+                     [
+                        -115.29005,
+                        47.72131
+                     ]
+                  ]
+               ]
+            },
+            "spatialCoverage":{
+               "type":"Polygon",
+               "coordinates":[
+                  [
+                     [
+                        -115.1072,
+                        47.72131
+                     ],
+                     [
+                        -111.89992,
+                        47.79133
+                     ],
+                     [
+                        -111.94012,
+                        49.98242
+                     ],
+                     [
+                        -115.29005,
+                        49.90683
+                     ],
+                     [
+                        -115.1072,
+                        47.72131
+                     ]
+                  ]
+               ]
+            },
+            "temporalCoverage":{
+               "endDate":"2020-03-29 00:00:00",
+               "startDate":"2020-03-29 00:00:00"
+            },
+            "publishDate":"2020-03-29 18:11:47"
+         }
+
+
+dataset filters result:
+
+[
+      {
+         "id":"5e83d0b84d321b85",
+         "legacyFieldId":20520,
+         "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#landsat_product_id",
+         "fieldConfig":{
+            "type":"Text",
+            "filters":[
+               {
+                  "type":"StringToUpper",
+                  "options":[
+
+                  ]
+               },
+               {
+                  "type":"Application\\Filter\\Like",
+                  "options":[
+
+                  ]
+               }
+            ],
+            "options":{
+               "size":"45"
+            },
+            "validators":[
+
+            ],
+            "numElements":"5",
+            "displayListId":"None"
+         },
+         "fieldLabel":"Landsat Product Identifier",
+         "searchSql":"EE_DISPLAY_ID like ?"
+      },
+      {
+         "id":"5e83d0b81d20cee8",
+         "legacyFieldId":20514,
+         "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#wrs_path",
+         "fieldConfig":{
+            "type":"Range",
+            "filters":[
+
+            ],
+            "options":[
+
+            ],
+            "validators":[
+
+            ],
+            "numElements":1,
+            "displayListId":"None"
+         },
+         "fieldLabel":"WRS Path",
+         "searchSql":"WRS_PATH between ?"
+      },
+      {
+         "id":"5e83d0b849ed5ee7",
+         "legacyFieldId":20516,
+         "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#wrs_row",
+         "fieldConfig":{
+            "type":"Range",
+            "filters":[
+
+            ],
+            "options":[
+
+            ],
+            "validators":[
+
+            ],
+            "numElements":1,
+            "displayListId":"None"
+         },
+         "fieldLabel":"WRS Row",
+         "searchSql":"WRS_ROW between ?"
+      },
+      {
+         "id":"5e83d0b8fb079b8b",
+         "legacyFieldId":20510,
+         "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#collection_category",
+         "fieldConfig":{
+            "type":"Select",
+            "filters":[
+
+            ],
+            "options":{
+               "size":"4",
+               "multiple":True
+            },
+            "validators":[
+
+            ],
+            "numElements":1,
+            "displayListId":"2837"
+         },
+         "fieldLabel":"Collection Category",
+         "searchSql":"COLLECTION_CATEGORY = ?",
+         "valueList":{
+            "":"All",
+            "T1":"Tier 1",
+            "T2":"Tier 2",
+            "RT":"Real-Time"
+         }
+      },
+      {
+         "id":"5e83d0b86227e0aa",
+         "legacyFieldId":20517,
+         "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#data_type_l1",
+         "fieldConfig":{
+            "type":"Select",
+            "filters":[
+
+            ],
+            "options":{
+               "size":"4",
+               "multiple":True
+            },
+            "validators":[
+
+            ],
+            "numElements":1,
+            "displayListId":"2833"
+         },
+         "fieldLabel":"Data Type Level-1",
+         "searchSql":"RIGHT(DATA_TYPE_L1, 4) = ?",
+         "valueList":{
+            "":"All",
+            "L1TP":"Level 1TP",
+            "L1GT":"Level 1GT",
+            "L1GS":"Level 1GS"
+         }
+      },
+      {
+         "id":"5e83d0b8d5631ba",
+         "legacyFieldId":20518,
+         "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#sensor_id",
+         "fieldConfig":{
+            "type":"Select",
+            "filters":[
+               {
+                  "type":"StringToUpper",
+                  "options":[
+
+                  ]
+               }
+            ],
+            "options":{
+               "size":"4",
+               "multiple":True
+            },
+            "validators":[
+
+            ],
+            "numElements":1,
+            "displayListId":"2773"
+         },
+         "fieldLabel":"Sensor Identifier",
+         "searchSql":"SENSOR_ID 
+= ?",
+         "valueList":{
+            "":"All",
+            "OLI":"OLI",
+            "OLI_TIRS":"OLI_TIRS",
+            "TIRS":"TIRS"
+         }
+      },
+      {
+         "id":"5e83d0b83a03f8ee",
+         "legacyFieldId":20513,
+         "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#day_or_night",
+         "fieldConfig":{
+            "type":"Select",
+            "filters":[
+               {
+                  "type":"StringToUpper",
+                  "options":[
+
+                  ]
+               }
+            ],
+            "options":{
+               "size":"3",
+               "multiple":True
+            },
+            "validators":[
+
+            ],
+            "numElements":1,
+            "displayListId":"2836"
+         },
+         "fieldLabel":"Day/Night Indicator",
+         "searchSql":"DAY_NIGHT = ?",
+         "valueList":{
+            "":"All",
+            "DAY":"Day",
+            "NIGHT":"Night"
+         }
+      },
+      {
+         "id":"5e83d0b8e75dc797",
+         "legacyFieldId":25171,
+         "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#sun_elevation",
+         "fieldConfig":{
+            "type":"Range",
+            "filters":[
+
+            ],
+            "options":[
+
+            ],
+            "validators":[
+
+            ],
+            "numElements":1,
+            "displayListId":"None"
+         },
+         "fieldLabel":"Sun Elevation",
+         "searchSql":"SUN_ELEVATION_L1 between ?"
+      },
+      {
+         "id":"5e83d0b8fcbae1d4",
+         "legacyFieldId":20511,
+         "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#date_l1_generated",
+         "fieldConfig":{
+            "type":"Range",
+            "filters":[
+
+            ],
+            "options":[
+
+            ],
+            "validators":[
+
+            ],
+            "numElements":1,
+            "displayListId":"None"
+         },
+         "fieldLabel":"Date L-1 Generated (Ex. YYYY/MM/DD)",
+         "searchSql":"to_char(DATE_L1_GENERATED,'YYYY/MM/DD') between ?"
+      },
+      {
+         "id":"5e83d0b814132720",
+         "legacyFieldId":20521,
+         "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#geometric_rmse_model",
+         "fieldConfig":{
+            "type":"Range",
+            "filters":[
+
+            ],
+            "options":[
+
+            ],
+            "validators":[
+
+            ],
+            "numElements":1,
+            "displayListId":"None"
+         },
+         "fieldLabel":"Geometric RMSE Model (meters)",
+         "searchSql":"GEOMETRIC_RMSE_MODEL between ?"
+      },
+      {
+         "id":"5e83d0b897ea00c7",
+         "legacyFieldId":20519,
+         "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#nadir_offnadir",
+         "fieldConfig":{
+            "type":"Select",
+            "filters":[
+               {
+                  "type":"StringToUpper",
+                  "options":[
+
+                  ]
+               }
+            ],
+            "options":{
+               "size":"3",
+               "multiple":True
+            },
+            "validators":[
+
+            ],
+            "numElements":1,
+            "displayListId":"2768"
+         },
+         "fieldLabel":"Nadir/Off Nadir",
+         "searchSql":"NADIR_OFFNADIR = ?",
+         "valueList":{
+            "":"All",
+            "NADIR":"Nadir",
+            "OFFNADIR":"Off Nadir"
+         }
+      },
+      {
+         "id":"5e83d0b87936ca20",
+         "legacyFieldId":20512,
+         "dictionaryLink":"https://lta.cr.usgs.gov/DD/landsat_dictionary.html#landsat_scene_id",
+         "fieldConfig":{
+            "type":"Text",
+            "filters":[
+               {
+                  "type":"StringToUpper",
+                  "options":[
+
+                  ]
+               },
+               {
+                  "type":"Application\\Filter\\Like",
+                  "options":[
+
+                  ]
+               }
+            ],
+            "options":{
+               "size":"30"
+            },
+            "validators":[
+
+            ],
+            "numElements":"5",
+            "displayListId":"None"
+         },
+         "fieldLabel":"Landsat Scene Identifier (Legacy)",
+         "searchSql":"ENTITY_ID like ?"
+      }
+   ],
+
+More info on fields here: https://lta.cr.usgs.gov/DD/landsat_dictionary.html
+
+{"results": , "errorCode": "INPUT_INVALID", "errorMessage": "Unknown filterType '' used"}
+
+
+{'entity_id': 'LC80400252020066LGN00', 
+'api_source': 'usgs_ee', 
+'download_source': None, 
+'footprint': 'POLYGON ((-113.05619 49.64667, -110.50941 49.19597, -109.74047 50.89097, -112.37696 51.34878, -113.05619 49.64667))', 
+'mbr': 'POLYGON((-113.05619 51.34878, -109.74047 51.34878, -109.74047 49.19597, -113.05619 49.19597, -113.05619 51.34878))', 
+'dataset_name': 'LANDSAT_8_C1', 
+'name': 'LC08_L1TP_040025_20200306_20200314_01_T1', 
+'uuid': 'LC80400252020066LGN00', 
+'preview_url': 'https://ims.cr.usgs.gov/browse/landsat_8_c1/2020/040/025/LC08_L1TP_040025_20200306_20200314_01_T1.jpg', 
+'manual_product_url': 'https://earthexplorer.usgs.gov/metadata/full/landsat_8_c1/LC80400252020066LGN00/', 
+'manual_download_url': 'https://earthexplorer.usgs.gov/download/external/options/landsat_8_c1/LC80400252020066LGN00/M2M/', 
+'manual_bulkorder_url': None, 
+'metadata_url': 'https://earthexplorer.usgs.gov/metadata/full/landsat_8_c1/LC80400252020066LGN00/?responseType=viewXml', 
+'last_modified': datetime.datetime(2020, 3, 6, 18, 7, 47), 
+'bulk_inprogress': False, 
+'summary': 'ID: LC08_L1TP_040025_20200306_20200314_01_T1, Acquisition Date: 2020-03-06, Path: 40, Row: 25', 
+'platform_name': 'Landsat-8', 
+'mgrs': None, 
+'detailed_metadata': 
+[{'fieldName': 'Landsat Product Identifier', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_c2_dictionary.html#landsat_product_id', 'value': 'LC08_L1TP_040025_20200306_20200314_01_T1'}, 
+{'fieldName': 'Landsat Scene Identifier', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_c2_dictionary.html#landsat_scene_id', 'value': 'LC80400252020066LGN00'}, 
+{'fieldName': 'Acquisition Date', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_c2_dictionary.html#acquisition_date', 'value': '2020/03/06'}, 
+{'fieldName': 'Collection Category', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_c2_dictionary.html#acquisition_date', 'value': 'T1'}, 
+{'fieldName': 'Collection Number', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_c2_dictionary.html#acquisition_date', 'value': 1}, 
+{'fieldName': 'WRS Path', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_c2_dictionary.html#acquisition_date', 'value': ' 040'}, 
+{'fieldName': 'WRS Row', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_c2_dictionary.html#acquisition_date', 'value': ' 025'}, 
+{'fieldName': 'Target WRS Path', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_c2_dictionary.html#acquisition_date', 'value': ' 040'}, 
+{'fieldName': 'Target WRS Row', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_c2_dictionary.html#acquisition_date', 'value': ' 025'}, 
+{'fieldName': 'Nadir/Off Nadir', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_c2_dictionary.html#acquisition_date', 'value': 'NADIR'}, 
+{'fieldName': 'Roll Angle', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#roll_angle', 'value': '-0.001'}, 
+{'fieldName': 'Date L-1 Generated', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#date_l1_generated', 'value': '2020/03/14'}, 
+{'fieldName': 'Start Time', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#start_time', 'value': '2020:066:18:17:26.1217240'}, 
+{'fieldName': 'Stop Time', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#stop_time', 'value': '2020:066:18:17:57.8917240'}, 
+{'fieldName': 'Station Identifier', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#distribution_site', 'value': 'LGN'}, 
+{'fieldName': 'Day/Night Indicator', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#day_or_night', 'value': 'DAY'}, 
+{'fieldName': 'Land Cloud Cover', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#cloud_cover_land', 'value': '58.08'}, 
+{'fieldName': 'Scene Cloud Cover', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#cloud_cover', 'value': '58.08'}, 
+{'fieldName': 'Ground Control Points Model', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#ground_control_points_model', 'value': 143}, 
+{'fieldName': 'Ground Control Points Version', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#ground_control_points_version', 'value': 4}, 
+{'fieldName': 'Geometric RMSE Model (meters)', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#geometric_rmse_model', 'value': '9.669'}, 
+{'fieldName': 'Geometric RMSE Model X', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#geometric_rmse_model_x', 'value': '7.007'}, 
+{'fieldName': 'Geometric RMSE Model Y', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#geometric_rmse_model_y', 'value': '6.663'}, 
+{'fieldName': 'Image Quality', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#image_quality_landsat_8', 'value': 9}, 
+{'fieldName': 'Processing Software Version', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#processing_software_version', 'value': 'LPGS_13.1.0'}, 
+{'fieldName': 'Sun Elevation L1', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#sun_elevation', 'value': '31.87776093'}, 
+{'fieldName': 'Sun Azimuth L1', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#sun_azimuth', 'value': '156.63627668'}, 
+{'fieldName': 'TIRS SSM Model', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#tirs_ssm_model', 'value': 'FINAL'}, 
+{'fieldName': 'Data Type Level-1', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#data_type_l1', 'value': 'OLI_TIRS_L1TP'}, 
+{'fieldName': 'Sensor Identifier', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#sensor_id ', 'value': 'OLI_TIRS'}, 
+{'fieldName': 'Panchromatic Lines', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#panchromatic_lines', 'value': 16041}, 
+{'fieldName': 'Panchromatic Samples', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#panchromatic_samples', 'value': 15841}, 
+{'fieldName': 'Reflective Lines', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#reflective_lines', 'value': 8021}, 
+{'fieldName': 'Reflective Samples', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#reflective_samples', 'value': 7921}, 
+{'fieldName': 'Thermal Lines', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#thermal_lines', 'value': 8021}, 
+{'fieldName': 'Thermal Samples', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#thermal_samples', 'value': 7921}, 
+{'fieldName': 'Map Projection Level-1', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#map_projection_l1', 'value': 'UTM'}, 
+{'fieldName': 'UTM Zone', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#utm_zone', 'value': 12}, 
+{'fieldName': 'Datum', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#datum', 'value': 'WGS84'}, 
+{'fieldName': 'Ellipsoid', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#ellipsoid', 'value': 'WGS84'}, 
+{'fieldName': 'Grid Cell Size Panchromatic', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#grid_cell_size_panchromatic', 'value': '15.00'}, 
+{'fieldName': 'Grid Cell Size Reflective', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#grid_cell_size_reflective', 'value': '30.00'}, 
+{'fieldName': 'Grid Cell Size Thermal', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#grid_cell_size_thermal', 'value': '30.00'}, 
+{'fieldName': 'Bias Parameter File Name OLI', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#bpf_name_oli', 'value': 'LO8BPF20200306180706_20200306185543.01'}, 
+{'fieldName': 'Bias Parameter File Name TIRS', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#bpf_name_tirs', 'value': 'LT8BPF20200223110021_20200310034739.01'}, 
+{'fieldName': 'Calibration Parameter File', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#cpf_name', 'value': 'LC08CPF_20200101_20200331_01.04'}, 
+{'fieldName': 'RLUT File Name', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#rlut_file_name', 'value': 'LC08RLUT_20150303_20431231_01_12.h5'}, 
+{'fieldName': 'Center Latitude', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_degrees', 'value': '50&deg;16\'51.56"N'}, 
+{'fieldName': 'Center Longitude', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_degrees', 'value': '111&deg;25\'07"W'}, 
+{'fieldName': 'UL Corner Lat', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_degrees', 'value': '51&deg;20\'24.04"N'}, 
+{'fieldName': 'UL Corner Long', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_degrees', 'value': '113&deg;08\'05.64"W'}, 
+{'fieldName': 'UR Corner Lat', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_degrees', 'value': '51&deg;21\'09.04"N'}, 
+{'fieldName': 'UR Corner Long', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_degrees', 'value': '109&deg;43\'24.06"W'},
+ {'fieldName': 'LL Corner Lat', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_degrees', 'value': '49&deg;10\'39.25"N'}, 
+ {'fieldName': 'LL Corner Long', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_degrees', 'value': '113&deg;02\'25.22"W'}, 
+ {'fieldName': 'LR Corner Lat', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_degrees', 'value': '49&deg;11\'20.94"N'}, 
+ {'fieldName': 'LR Corner Long', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_degrees', 'value': '109&deg;46\'47.71"W'}, 
+ {'fieldName': 'Center Latitude dec', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_decimal', 'value': '50.28099'}, 
+ {'fieldName': 'Center Longitude dec', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_decimal', 'value': '-111.41861'}, 
+ {'fieldName': 'UL Corner Lat dec', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_decimal', 'value': '51.34001'}, 
+ {'fieldName': 'UL Corner Long dec', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_decimal', 'value': '-113.13490'}, 
+ {'fieldName': 'UR Corner Lat dec', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_decimal', 'value': '51.35251'}, 
+ {'fieldName': 'UR Corner Long dec', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_decimal', 'value': '-109.72335'}, 
+ {'fieldName': 'LL Corner Lat dec', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_decimal', 'value': '49.17757'}, 
+ {'fieldName': 'LL Corner Long dec', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_decimal', 'value': '-113.04034'}, 
+ {'fieldName': 'LR Corner Lat dec', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_decimal', 'value': '49.18915'}, 
+ {'fieldName': 'LR Corner Long dec', 'descriptionLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#coordinates_decimal', 'value': '-109.77992'}], 
+ 'epsg_code': '32612', 
+ 'vendor_name': 'LC08_L1TP_040025_20200306_20200314_01_T1', 
+ 'acquisition_start': datetime.datetime(2020, 3, 6, 18, 17, 26, 121720), 
+ 'acquisition_end': datetime.datetime(2020, 3, 6, 18, 17, 57, 891720), 
+ 'pathrow': ' 040 025', 
+ 'land_cloud_percent': '58.08', 
+ 'cloud_percent': '58.08', 
+ 'instrument': 'OLI_TIRS', 
+ 'sat_name': 'LANDSAT8'}

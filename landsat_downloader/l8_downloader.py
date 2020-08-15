@@ -83,7 +83,9 @@ class L8Downloader:
     def __init__(self, path_to_config='config.yaml', username=None, password=None, verbose=False):
 
         # create logger
+        logging.basicConfig(filename='example.log', level=logging.DEBUG)
         self.logger = logging.getLogger(__name__)
+        
 
         # create console handler and set level to debug
         ch = logging.StreamHandler()
@@ -222,9 +224,6 @@ class L8Downloader:
                         f'There was a problem authenticating, status_code = {r.status_code}')
                     return None
 
-    def json_request(self):
-        pass
-
     def auth_attempt(self):
         """Try to login, with exponential backup retry scheme"""
 
@@ -315,28 +314,9 @@ class L8Downloader:
                         "startDate": query_dict['date_start'].strftime("%Y-%m-%d"),
                         "endDate": query_dict['date_end'].strftime("%Y-%m-%d")
             },
-            "includeUnknownCloudCover": False
+            "maxCloudCover": query_dict["cloud_percent"],
+            "includeUnknownCloudCover": True
         }
-
-        if dataset_name == 'LANDSAT_8_C1':
-
-            data["additionalCriteria"] = {
-                "filterType": "and",
-                "childFilters": [
-                    {"filterType":"between","fieldId":20522,"firstValue":"0","secondValue":str(query_dict['cloud_percent'])},
-                ]
-            }
-        elif dataset_name == 'SENTINEL_2A':
-            platform_name = 'Sentinel-2'
-            cloud_maximum_percent = query_dict['cloud_percent']
-            converted_cloud_max = math.floor(cloud_maximum_percent / 10) - 1
-            print(converted_cloud_max)
-            data["additionalCriteria"] = {
-                "filterType": "and",
-                "childFilters": [
-                    {"filterType":"between","fieldId":18696,"firstValue":"0","secondValue":str(converted_cloud_max)},
-                ]
-            }
 
         return data
 
@@ -380,7 +360,7 @@ class L8Downloader:
         }
 
         try: 
-            r = requests.post(dataset_url, payload)
+            r = requests.get(dataset_url, params=payload, timeout=300)
         except BaseException as e:
             self.logger.warning(str(e))
         else:
@@ -429,7 +409,7 @@ class L8Downloader:
         }
 
         try:
-            r = requests.post(dataset_url, payload)
+            r = requests.get(dataset_url, params=payload, timeout=300)
         except BaseException as e:
             self.logger.warning(str(e))
         else:
@@ -510,7 +490,7 @@ class L8Downloader:
             else:
                 return -1
 
-    def populate_result_list(self, result, platform_name, dataset_name, detailed=False):
+    def populate_result_list(self, result, platform_name, dataset_name, detailed=False, realtime=False):
         """ Takes a dictionary of results from the query, returns a standardized
             product_dictionary with correct keys for the metadata
         """
@@ -552,7 +532,7 @@ class L8Downloader:
                 product_dict['metadata_url'] = r['metadataUrl']
 
                 # 2017-05-25T15:17:11
-                product_dict['last_modified'] = datetime.strptime(r['modifiedDate'], '%Y-%m-%dT%H:%M:%S')
+                product_dict['last_modified'] = datetime.strptime(r['modifiedDate'], '%Y-%m-%d %H:%M:%S')
                 product_dict['bulk_inprogress'] = r['bulkOrdered']
                 product_dict['summary'] = r['summary']
 
@@ -562,7 +542,7 @@ class L8Downloader:
                 product_dict['mgrs'] = None
 
                 product_dict['api_source'] = 'usgs_ee'
-
+                
                 result_list.append(product_dict)
 
         elif platform_name == 'Sentinel-2':
@@ -633,6 +613,13 @@ class L8Downloader:
             # use scene search to get the detailed metadat fields
             result_list = self.fill_detailed_metadata(result_list)
 
+        if not realtime:
+            result_list_filtered = []
+            for r in result_list:
+                if r['collection_category'] in ['T1']:
+                    result_list_filtered.append(r)
+
+            result_list = result_list_filtered
 
         return result_list
 
@@ -675,170 +662,174 @@ class L8Downloader:
                 "apiKey": "USERS API KEY"
             }
         """
-        self.check_auth()
-        platform_name = "Unknown"
 
-        data =  {
-            "datasetName": dataset_name,
-            "apiKey": self.auth_token['token']
-        }
+        self.logger.warning('This function is disabled until USGS restores metadata based querying (August 10, 2020).')
+        # self.check_auth()
+        # platform_name = "Unknown"
 
-        if dataset_name == 'LANDSAT_8_C1':
-            platform_name = "Landsat-8"
-            # build out product list filter
-            child_filter_list = []
-            self.logger.debug(product_name_list)
+        # data =  {
+        #     "datasetName": dataset_name,
+        #     "apiKey": self.auth_token['token']
+        # }
 
-            for product_name in product_name_list:
-                filter_dict = {
-                     "filterType": "value",
-                     "fieldId": 20520,
-                     "value": product_name,
-                     "operand": "like"
-                }
-                child_filter_list.append(filter_dict)
+        # if dataset_name == 'LANDSAT_8_C1':
+        #     platform_name = "Landsat-8"
+        #     # build out product list filter
+        #     # child_filter_list = []
+        #     # self.logger.debug(product_name_list)
 
-            data["additionalCriteria"] = {
-                "filterType": "and",
-                "childFilters": [
-                    {"filterType":"between","fieldId":20522,"firstValue":"0","secondValue":str(query_dict['cloud_percent'])},
-                    {"filterType":"or",
-                        "childFilters": child_filter_list
-                    }
-                ]
-            }
+        #     # for product_name in product_name_list:
+        #     #     filter_dict = {
+        #     #          "filterType": "value",
+        #     #          "fieldId": 20520,
+        #     #          "value": product_name,
+        #     #          "operand": "like"
+        #     #     }
+        #     #     child_filter_list.append(filter_dict)
 
-        elif dataset_name == 'SENTINEL_2A':
-            platform_name = 'Sentinel-2'
-            cloud_maximum_percent = query_dict['cloud_percent']
-            converted_cloud_max = math.floor(cloud_maximum_percent / 10) - 1
-            self.logger.debug(converted_cloud_max)
+        #     # data["additionalCriteria"] = {
+        #     #     "filterType": "and",
+        #     #     "childFilters": [
+        #     #         {"filterType":"between","fieldId":20522,"firstValue":"0","secondValue":str(query_dict['cloud_percent'])},
+        #     #         {"filterType":"or",
+        #     #             "childFilters": child_filter_list
+        #     #         }
+        #     #     ]
+        #     # }
 
-            # build out product list filter
-            child_filter_list = []
-            for product_name in product_name_list:
-                # detect if vendor product id or vendor tile id
-                # if vendor product id, need convert to vendor tile id
-                # we do this because usgs stores the product id with an mgrs from the datastrip(I guess)
-                # so if we don't convert it we will miss products because of the non-matching mgrs tile
-                # vendor tile id api fieldId = 18699
-                # vendor product id api fieldId = 18702
-                if product_name[:2] == 'S2':
-                    # need to convert it
-                    name_parts = product_name.split('_')
-                    converted_product_name = f'L1C_{name_parts[5]}'
-                    filter_dict = {
-                        "filterType": "value",
-                        "fieldId": 18702,
-                        "value": product_name[:27],
-                        "operand": "like"
-                    }
-                    filter_dict2 = {
-                        "filterType": "value",
-                        "fieldId": 18699,
-                        "value": converted_product_name,
-                        "operand": "like"
-                    }
+        # elif dataset_name == 'SENTINEL_2A':
+        #     platform_name = 'Sentinel-2'
+        #     cloud_maximum_percent = query_dict['cloud_percent']
+        #     converted_cloud_max = math.floor(cloud_maximum_percent / 10) - 1
+        #     self.logger.debug(converted_cloud_max)
 
-                    child_filter_list.append({
-                        "filterType": "and",
-                        "childFilters": [
-                            filter_dict,
-                            filter_dict2
-                        ]
-                    })
+        #     # build out product list filter
+        #     child_filter_list = []
+        #     for product_name in product_name_list:
+        #         # detect if vendor product id or vendor tile id
+        #         # if vendor product id, need convert to vendor tile id
+        #         # we do this because usgs stores the product id with an mgrs from the datastrip(I guess)
+        #         # so if we don't convert it we will miss products because of the non-matching mgrs tile
+        #         # vendor tile id api fieldId = 18699
+        #         # vendor product id api fieldId = 18702
+        #         if product_name[:2] == 'S2':
+        #             # need to convert it
+        #             name_parts = product_name.split('_')
+        #             converted_product_name = f'L1C_{name_parts[5]}'
+        #             filter_dict = {
+        #                 "filterType": "value",
+        #                 "fieldId": 18702,
+        #                 "value": product_name[:27],
+        #                 "operand": "like"
+        #             }
+        #             filter_dict2 = {
+        #                 "filterType": "value",
+        #                 "fieldId": 18699,
+        #                 "value": converted_product_name,
+        #                 "operand": "like"
+        #             }
 
-                else:
-                    # its a vendor tile id already
-                    converted_product_name = product_name
-                    filter_dict = {
-                        "filterType": "value",
-                        "fieldId": 18699,
-                        "value": converted_product_name,
-                        "operand": "like"
-                    }
-                    child_filter_list.append(filter_dict)
+        #             child_filter_list.append({
+        #                 "filterType": "and",
+        #                 "childFilters": [
+        #                     filter_dict,
+        #                     filter_dict2
+        #                 ]
+        #             })
 
-            data["additionalCriteria"] = {
-                "filterType": "and",
-                "childFilters": [
-                    {"filterType":"between","fieldId":18696,"firstValue":"0","secondValue":str(converted_cloud_max)},
-                    {"filterType":"or",
-                        "childFilters": child_filter_list
-                    }
-                ]
-            }
+        #         else:
+        #             # its a vendor tile id already
+        #             converted_product_name = product_name
+        #             filter_dict = {
+        #                 "filterType": "value",
+        #                 "fieldId": 18699,
+        #                 "value": converted_product_name,
+        #                 "operand": "like"
+        #             }
+        #             child_filter_list.append(filter_dict)
 
-        # print(data)
-        dataset_url = self.url_post_string.format("search")
-        all_results = []
+        #     data["additionalCriteria"] = {
+        #         "filterType": "and",
+        #         "childFilters": [
+        #             {"filterType":"between","fieldId":18696,"firstValue":"0","secondValue":str(converted_cloud_max)},
+        #             {"filterType":"or",
+        #                 "childFilters": child_filter_list
+        #             }
+        #         ]
+        #     }
 
-        # total_num = self.get_total_products(data)
-        # if total_num == -1:
-        #     print('something went wrong, got no results')
+        # # print(data)
+        # dataset_url = self.url_post_string.format("search")
+
+        # # total_num = self.get_total_products(data)
+        # # if total_num == -1:
+        # #     print('something went wrong, got no results')
+        # #     return []
+
+        # # data['maxResults'] = total_num
+        # data['maxResults'] = 5000
+        # # print(total_num)
+        # payload = {
+        #     "jsonRequest": json.dumps(data)
+        # }
+
+        # time.sleep(0.25)
+        # try:
+
+        #     r = requests.get(dataset_url, params=payload, timeout=300)
+        # except BaseException as e:
+        #     self.logger.warning(str(e))
         #     return []
+        # else:
+        #     if r.status_code == 200:
+        #         result = r.json()
 
-        # data['maxResults'] = total_num
-        data['maxResults'] = 5000
-        # print(total_num)
-        payload = {
-            "jsonRequest": json.dumps(data)
-        }
+        #         self.logger.warning(result['data'])
+        #         self.logger.warning(result)
+                
+        #         if result['errorCode'] == None:
+        #             self.update_auth_time()
+        #             if self.verbose:
+        #                 self.list_results(result['data']['results'],
+        #                                             ['acquisitionDate',
+        #                                             'spatialFootprint',
+        #                                             'browseUrl',
+        #                                             'downloadUrl',
+        #                                             'entityId',
+        #                                             'metadataUrl',
+        #                                             'summary',
+        #                                             'bulkOrdered',
+        #                                             'ordered'
+        #                                             ],
+        #                                             'search_for_products', write_to_csv=write_to_csv)
 
-        time.sleep(0.25)
-        try:
+        #             result_list = self.populate_result_list(result, platform_name, dataset_name, detailed=detailed)
 
-            r = requests.post(dataset_url, payload, timeout=300)
-        except BaseException as e:
-            self.logger.warning(str(e))
-            return []
-        else:
-            if r.status_code == 200:
-                result = r.json()
+        #             if just_entity_ids:
+        #                 return [r['entity_id'] for r in result_list]
+        #             else:
+        #                 return result_list
 
-                if result['errorCode'] == None:
-                    self.update_auth_time()
-                    if self.verbose:
-                        self.list_results(result['data']['results'],
-                                                    ['acquisitionDate',
-                                                    'spatialFootprint',
-                                                    'browseUrl',
-                                                    'downloadUrl',
-                                                    'entityId',
-                                                    'metadataUrl',
-                                                    'summary',
-                                                    'bulkOrdered',
-                                                    'ordered'
-                                                    ],
-                                                    'search_for_products', write_to_csv=write_to_csv)
+        #         elif result['errorCode'] == 'RATE_LIMIT':
+        #             self.logger.warning('API access is denied because of a RATE LIMIT issue. Waiting for 5 mins and calling again.')
+        #             self.logger.warning(f'Current retry count at {call_count}')
 
-                    result_list = self.populate_result_list(result, platform_name, dataset_name, detailed=detailed)
+        #             if call_count > self.max_attempts:
+        #                 self.logger.error('Max retries exceeded. Giving up on current task')
+        #                 return []
 
-                    if just_entity_ids:
-                        return [r['entity_id'] for r in result_list]
-                    else:
-                        return result_list
+        #             time.sleep(60 * 5)
+        #             call_count += 1
 
-                elif result['errorCode'] == 'RATE_LIMIT':
-                    self.logger.warning('API access is denied because of a RATE LIMIT issue. Waiting for 5 mins and calling again.')
-                    self.logger.warning(f'Current retry count at {call_count}')
+        #             self.search_for_products_by_name(dataset_name, product_name_list, query_dict, call_count=call_count)
+        #         else:
+        #             self.logger.warning(f"There was a problem getting products, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['errorCode']}")
+        #             return []
+        #     else:
+        #         self.logger.warning(f"There was a problem getting products, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}")
+        #         return []
 
-                    if call_count > self.max_attempts:
-                        self.logger.error('Max retries exceeded. Giving up on current task')
-                        return []
-
-                    time.sleep(60 * 5)
-                    call_count += 1
-
-                    self.search_for_products_by_name(dataset_name, product_name_list, query_dict, call_count=call_count)
-                else:
-                    self.logger.warning(f"There was a problem getting products, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['errorCode']}")
-                    return []
-            else:
-                self.logger.warning(f"There was a problem getting products, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}")
-                return []
-
-    def search_for_products(self, dataset_name, polygon, query_dict, detailed=False, just_entity_ids=False, write_to_csv=False):
+    def search_for_products(self, dataset_name, polygon, query_dict, detailed=False, just_entity_ids=False, write_to_csv=False, realtime=False):
         """
             example route /search
 
@@ -906,45 +897,51 @@ class L8Downloader:
             "temporalFilter": {
                         "startDate": query_dict['date_start'].strftime("%Y-%m-%d"),
                         "endDate": query_dict['date_end'].strftime("%Y-%m-%d")
-            }
+            },
+            "maxCloudCover": query_dict["cloud_percent"],
+            "includeUnknownCloudCover": True,
+            "maxResults": 1000
         }
 
-        if dataset_name == 'LANDSAT_8_C1':
+        if dataset_name.upper() == 'LANDSAT_8_C1':
             platform_name = "Landsat-8"
 
-            data["additionalCriteria"] = {
-                "filterType": "and",
-                "childFilters": [
-                    {"filterType":"between","fieldId":20522,"firstValue":"0","secondValue":str(query_dict['cloud_percent'])},
-                ]
-            }
-        elif dataset_name == 'SENTINEL_2A':
-            platform_name = 'Sentinel-2'
-            cloud_maximum_percent = query_dict['cloud_percent']
-            converted_cloud_max = math.floor(cloud_maximum_percent / 10) - 1
-            print(converted_cloud_max)
-            data["additionalCriteria"] = {
-                "filterType": "and",
-                "childFilters": [
-                    {"filterType":"between","fieldId":18696,"firstValue":"0","secondValue":str(converted_cloud_max)},
-                ]
-            }
+        #     data["additionalCriteria"] = {
+        #         "filterType": "and",
+        #         "childFilters": [
+        #             {"filterType":"between","fieldId":20522,"firstValue":"0","secondValue":str(query_dict['cloud_percent'])},
+        #         ]
+        #     }
+        # elif dataset_name == 'SENTINEL_2A':
+        #     platform_name = 'Sentinel-2'
+        #     cloud_maximum_percent = query_dict['cloud_percent']
+        #     converted_cloud_max = math.floor(cloud_maximum_percent / 10) - 1
+        #     print(converted_cloud_max)
+        #     data["additionalCriteria"] = {
+        #         "filterType": "and",
+        #         "childFilters": [
+        #             {"filterType":"between","fieldId":18696,"firstValue":"0","secondValue":str(converted_cloud_max)},
+        #         ]
+        #     }
 
         dataset_url = self.url_post_string.format("search")
-        all_results = []
 
-        data['maxResults'] = 5000
         payload = {
             "jsonRequest": json.dumps(data)
         }
-        time.sleep(0.25)
+
         try:
-            r = requests.post(dataset_url, payload, timeout=240)
+            r = requests.get(dataset_url, params=payload, timeout=300)
         
-        except BaseExecption as e:
+        except BaseException as e:
             self.logger.warning(str(e))
 
         else:
+            print(r)
+            print(r.text)
+            print(r.request)
+            print(r.headers)
+
             result = r.json()
 
             if r.status_code == 200 and result['errorCode'] == None:
@@ -963,7 +960,7 @@ class L8Downloader:
                                                 ],
                                                 'search_for_products', write_to_csv=write_to_csv)
 
-                result_list = self.populate_result_list(result, platform_name, dataset_name, detailed=detailed)
+                result_list = self.populate_result_list(result, platform_name, dataset_name, detailed=detailed, realtime=realtime)
 
                 if just_entity_ids:
                     return [r['entity_id'] for r in result_list]
@@ -981,157 +978,157 @@ class L8Downloader:
 
         # Sentinel2 fieldId for tile number (TXXXXX)
         # 18701
+        self.logger.warning('This function (search_for_products_by_tile) is disabled until USGS restores metadata based query filtering (August 10, 2020)')
+        # self.check_auth()
+        # platform_name = "Unknown"
 
-        self.check_auth()
-        platform_name = "Unknown"
+        # data =  {
+        #     "datasetName": dataset_name,
+        #     "apiKey": self.auth_token['token'],
+        #     "temporalFilter": {
+        #                 "startDate": query_dict['date_start'].strftime("%Y-%m-%d"),
+        #                 "endDate": query_dict['date_end'].strftime("%Y-%m-%d")
+        #     }
+        # }
 
-        data =  {
-            "datasetName": dataset_name,
-            "apiKey": self.auth_token['token'],
-            "temporalFilter": {
-                        "startDate": query_dict['date_start'].strftime("%Y-%m-%d"),
-                        "endDate": query_dict['date_end'].strftime("%Y-%m-%d")
-            }
-        }
+        # if dataset_name == 'LANDSAT_8_C1':
+        #     platform_name = "Landsat-8"
+        #     cloud_maximum_percent = query_dict['cloud_percent']
+        #     converted_cloud_max = int(math.ceil(cloud_maximum_percent / 10.0)) * 10
+        #     # build out product list filter
+        #     child_filter_list = []
+        #     for pathrow in tile_list:
+        #         filter_dict_path = {
+        #             "filterType": "value",
+        #             "fieldId": 20514,
+        #             "value": ' ' + pathrow[:3],
+        #             "operand": "="
+        #         }
 
-        if dataset_name == 'LANDSAT_8_C1':
-            platform_name = "Landsat-8"
-            cloud_maximum_percent = query_dict['cloud_percent']
-            converted_cloud_max = int(math.ceil(cloud_maximum_percent / 10.0)) * 10
-            # build out product list filter
-            child_filter_list = []
-            for pathrow in tile_list:
-                filter_dict_path = {
-                    "filterType": "value",
-                    "fieldId": 20514,
-                    "value": ' ' + pathrow[:3],
-                    "operand": "="
-                }
+        #         filter_dict_row = {
+        #             "filterType": "value",
+        #             "fieldId": 20516,
+        #             "value": ' ' + pathrow[3:],
+        #             "operand": "="
+        #         }
 
-                filter_dict_row = {
-                    "filterType": "value",
-                    "fieldId": 20516,
-                    "value": ' ' + pathrow[3:],
-                    "operand": "="
-                }
+        #         filter_pathrow = {
+        #             "filterType": "and",
+        #             "childFilters": [
+        #                 filter_dict_path,
+        #                 filter_dict_row
+        #             ]
+        #         }
 
-                filter_pathrow = {
-                    "filterType": "and",
-                    "childFilters": [
-                        filter_dict_path,
-                        filter_dict_row
-                    ]
-                }
+        #         child_filter_list.append(filter_pathrow)
 
-                child_filter_list.append(filter_pathrow)
-
-            # {'fieldId': 20510, 'name': 'Collection Category', 'fieldLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#collection_category', 'valueList': [{'value': None, 'name': 'All'}, {'value': 'T1', 'name': 'Tier 1'}, {'value': 'T2', 'name': 'Tier 2'}, {'value': 'RT', 'name': 'Real-Time'}]}, 
-            data["additionalCriteria"] = {
-                "filterType": "and",
-                "childFilters": [
-                    {"filterType":"between","fieldId":20522,"firstValue":"0","secondValue":str(converted_cloud_max)},
-                    {"filterType": "or",
-                        "childFilters": child_filter_list
-                    }
-                ]
-            }
+        #     # {'fieldId': 20510, 'name': 'Collection Category', 'fieldLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#collection_category', 'valueList': [{'value': None, 'name': 'All'}, {'value': 'T1', 'name': 'Tier 1'}, {'value': 'T2', 'name': 'Tier 2'}, {'value': 'RT', 'name': 'Real-Time'}]}, 
+        #     data["additionalCriteria"] = {
+        #         "filterType": "and",
+        #         "childFilters": [
+        #             {"filterType":"between","fieldId":20522,"firstValue":"0","secondValue":str(converted_cloud_max)},
+        #             {"filterType": "or",
+        #                 "childFilters": child_filter_list
+        #             }
+        #         ]
+        #     }
             
-            if 'collection_category' in query_dict.keys():
-                collection_filter = {
-                    "filterType": "or",
-                    "childFilters": []
-                }
+        #     if 'collection_category' in query_dict.keys():
+        #         collection_filter = {
+        #             "filterType": "or",
+        #             "childFilters": []
+        #         }
 
-                for collection in query_dict['collection_category']:
-                    value_filter = {
-                        "filterType": "value",
-                        "fieldId": 20510,
-                        "value": collection,
-                        "operand": "like"
-                    }
+        #         for collection in query_dict['collection_category']:
+        #             value_filter = {
+        #                 "filterType": "value",
+        #                 "fieldId": 20510,
+        #                 "value": collection,
+        #                 "operand": "like"
+        #             }
 
-                    collection_filter['childFilters'].append(value_filter)
+        #             collection_filter['childFilters'].append(value_filter)
                 
-                data["additionalCriteria"]["childFilters"].append(collection_filter)
+        #         data["additionalCriteria"]["childFilters"].append(collection_filter)
 
-            # TODO: Fix this later
-            # data["additionalCriteria"] = {
-            #     "filterType": "and",
-            #     "childFilters": [
-            #         {"filterType": "between","fieldId":20522,"firstValue":"0","secondValue":str(query_dict['cloud_percent'])},
-            #         {"filterType": "or", "fieldId": }
-            #     ]
-            # }
-        elif dataset_name == 'SENTINEL_2A':
-            platform_name = 'Sentinel-2'
-            cloud_maximum_percent = query_dict['cloud_percent']
-            converted_cloud_max = math.floor(cloud_maximum_percent / 10) - 1
-            # build out product list filter
-            child_filter_list = []
-            for gzd_100km in tile_list:
-                filter_dict = {
-                    "filterType": "value",
-                    "fieldId": 18701,
-                    "value": gzd_100km,
-                    "operand": "like"
-                }
+        #     # TODO: Fix this later
+        #     # data["additionalCriteria"] = {
+        #     #     "filterType": "and",
+        #     #     "childFilters": [
+        #     #         {"filterType": "between","fieldId":20522,"firstValue":"0","secondValue":str(query_dict['cloud_percent'])},
+        #     #         {"filterType": "or", "fieldId": }
+        #     #     ]
+        #     # }
+        # elif dataset_name == 'SENTINEL_2A':
+        #     platform_name = 'Sentinel-2'
+        #     cloud_maximum_percent = query_dict['cloud_percent']
+        #     converted_cloud_max = math.floor(cloud_maximum_percent / 10) - 1
+        #     # build out product list filter
+        #     child_filter_list = []
+        #     for gzd_100km in tile_list:
+        #         filter_dict = {
+        #             "filterType": "value",
+        #             "fieldId": 18701,
+        #             "value": gzd_100km,
+        #             "operand": "like"
+        #         }
 
-                child_filter_list.append(filter_dict)
+        #         child_filter_list.append(filter_dict)
 
-            data["additionalCriteria"] = {
-                "filterType": "and",
-                "childFilters": [
-                    {"filterType":"between","fieldId":18696,"firstValue":"0","secondValue":str(converted_cloud_max)},
-                    {"filterType":"or",
-                        "childFilters": child_filter_list
-                    }
-                ]
-            }
+        #     data["additionalCriteria"] = {
+        #         "filterType": "and",
+        #         "childFilters": [
+        #             {"filterType":"between","fieldId":18696,"firstValue":"0","secondValue":str(converted_cloud_max)},
+        #             {"filterType":"or",
+        #                 "childFilters": child_filter_list
+        #             }
+        #         ]
+        #     }
 
-        dataset_url = self.url_post_string.format("search")
-        all_results = []
+        # dataset_url = self.url_post_string.format("search")
+        # all_results = []
 
-        data['maxResults'] = 10000
-        payload = {
-            "jsonRequest": json.dumps(data)
-        }
+        # data['maxResults'] = 10000
+        # payload = {
+        #     "jsonRequest": json.dumps(data)
+        # }
 
-        time.sleep(0.25)
-        try:
-            r = requests.post(dataset_url, payload, timeout=240)
+        # time.sleep(0.25)
+        # try:
+        #     r = requests.get(dataset_url, params=payload, timeout=300)
 
-        except BaseException as e:
-            self.logger.warning(str(e))
-        else:
-            self.logger.debug(r)
-            result = r.json()
+        # except BaseException as e:
+        #     self.logger.warning(str(e))
+        # else:
+        #     self.logger.debug(r)
+        #     result = r.json()
 
-            if r.status_code == 200 and result['errorCode'] == None:
-                self.update_auth_time()
-                if self.verbose:
-                    self.list_results(result['data']['results'],
-                                                ['acquisitionDate',
-                                                'spatialFootprint',
-                                                'browseUrl',
-                                                'downloadUrl',
-                                                'entityId',
-                                                'metadataUrl',
-                                                'summary',
-                                                'bulkOrdered',
-                                                'ordered'
-                                                ],
-                                                'search_for_products', write_to_csv=write_to_csv)
+        #     if r.status_code == 200 and result['errorCode'] == None:
+        #         self.update_auth_time()
+        #         if self.verbose:
+        #             self.list_results(result['data']['results'],
+        #                                         ['acquisitionDate',
+        #                                         'spatialFootprint',
+        #                                         'browseUrl',
+        #                                         'downloadUrl',
+        #                                         'entityId',
+        #                                         'metadataUrl',
+        #                                         'summary',
+        #                                         'bulkOrdered',
+        #                                         'ordered'
+        #                                         ],
+        #                                         'search_for_products', write_to_csv=write_to_csv)
 
-                self.logger.info(f"Number of results found: {len(result)}")
+        #         self.logger.info(f"Number of results found: {len(result)}")
 
-                result_list = self.populate_result_list(result, platform_name, dataset_name, detailed=detailed)
+        #         result_list = self.populate_result_list(result, platform_name, dataset_name, detailed=detailed)
 
-                if just_entity_ids:
-                    return [r['entity_id'] for r in result_list]
-                else:
-                    return result_list
-            else:
-                self.logger.warning(f"There was a problem getting products, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}")
+        #         if just_entity_ids:
+        #             return [r['entity_id'] for r in result_list]
+        #         else:
+        #             return result_list
+        #     else:
+        #         self.logger.warning(f"There was a problem getting products, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}")
 
 
     def search_for_products_polygon_to_tiles(self,
@@ -1220,45 +1217,12 @@ class L8Downloader:
                 "longitude": upperrightX
                     }
             },
+            "maxCloudCover": query_dict["cloud_percent"],
+            "includeUnknownCloudCover": True
         }
 
         if dataset_name == 'LANDSAT_8_C1':
             platform_name = "Landsat-8"
-
-            # TODO: Fix this later
-            # data["additionalCriteria"] = {
-            #     "filterType": "and",
-            #     "childFilters": [
-            #         {"filterType": "between","fieldId":20522,"firstValue":"0","secondValue":str(query_dict['cloud_percent'])},
-            #         {"filterType": "or", "fieldId": }
-            #     ]
-            # }
-        elif dataset_name == 'SENTINEL_2A':
-            platform_name = 'Sentinel-2'
-            cloud_maximum_percent = query_dict['cloud_percent']
-            converted_cloud_max = math.floor(cloud_maximum_percent / 10) - 1
-
-            # # build out product list filter
-            # child_filter_list = []
-            # for gzd_100km in gzd_list_100km:
-            #     filter_dict = {
-            #         "filterType": "value",
-            #         "fieldId": 18701,
-            #         "value": gzd_100km,
-            #         "operand": "like"
-            #     }
-
-            #     child_filter_list.append(filter_dict)
-
-            data["additionalCriteria"] = {
-                "filterType": "and",
-                "childFilters": [
-                    {"filterType":"between","fieldId":18696,"firstValue":"0","secondValue":str(converted_cloud_max)},
-                    # {"filterType":"or",
-                    #     "childFilters": child_filter_list
-                    # }
-                ]
-            }
 
         dataset_url = self.url_post_string.format("search")
         all_results = []
@@ -1276,7 +1240,7 @@ class L8Downloader:
         }
         time.sleep(0.25)
         try:
-            r = requests.post(dataset_url, payload, timeout=240)
+            r = requests.get(dataset_url, params=payload, timeout=300)
         
         except BaseException as e:
             self.logger.warning(str(e))
@@ -1311,15 +1275,6 @@ class L8Downloader:
                                                             result['data']['results'],
                                                             dataset_name)
 
-                # real_result_list = []
-
-                # for product in temp_results:
-                #     mgrs_id = product['displayId'].split('_')[1][1:]
-                #     # print(mgrs_id)
-                #     if mgrs_id in gzd_list_100km:
-
-                #         real_result_list.append(product)
-
                 result['data']['results'] = temp_results
 
                 result_list = self.populate_result_list(result, platform_name, dataset_name, detailed=detailed)
@@ -1340,115 +1295,121 @@ class L8Downloader:
 
         self.logger.info('Populating detailed metadata for each product...')
         result_list = []
-        self.logger.debug(product_list)
-        detailed_metadata_list = self.search_scene_metadata(product_list[0]['dataset_name'], [r['entity_id'] for r in product_list])
-        self.logger.debug(detailed_metadata_list)
+        if len(product_list) > 0:
+            self.logger.debug(product_list)
+            detailed_metadata_list = self.search_scene_metadata(product_list[0]['dataset_name'], [r['entity_id'] for r in product_list])
+            self.logger.debug(detailed_metadata_list)
 
-        for r in product_list:
-            if r['platform_name'] == 'Landsat-8':
-                product_dict = dict(r)
-                # start time = '2017:135:18:29:18.4577340'
-                # datetime.strptime('Jun 1 2005  1:33PM', '%Y:%j:%H:%M:%S.%f')
-                # Iterate through metadata list, find the field, convert to datetime obj,
-                # select the first one
-                # print(r)
-
-
-                detailed_metadata = [md for md in detailed_metadata_list if md['entityId'] == r['entity_id']][0]['metadataFields']
-                product_dict['detailed_metadata'] = detailed_metadata
-
-                utm_zone = [r['value'] for r in product_dict['detailed_metadata'] if r['fieldName'] == 'UTM Zone'][0]
-                center_latitude = [r['value'] for r in product_dict['detailed_metadata'] if r['fieldName'] == 'Center Latitude'][0]
-                north_south = center_latitude[-1]
-                proj_start = '326' if north_south == 'N' else '327'
-                product_dict['epsg_code'] = proj_start + utm_zone
-
-                product_dict['vendor_name'] = r['name']
-                product_dict['acquisition_start'] = next((datetime.strptime(field['value'][:-2], '%Y:%j:%H:%M:%S.%f')
-                                                        for field in detailed_metadata
-                                                            if field['fieldName'] == 'Start Time'), None)
-
-                product_dict['acquisition_end'] = next((datetime.strptime(field['value'][:-2], '%Y:%j:%H:%M:%S.%f')
-                                                        for field in detailed_metadata
-                                                            if field['fieldName'] == 'Stop Time'), None)
-
-                path = next((field['value']
-                                                        for field in detailed_metadata
-                                                            if field['fieldName'] == 'WRS Path'), None)
-                row = next((field['value']
-                                                        for field in detailed_metadata
-                                                            if field['fieldName'] == 'WRS Row'), None)
-                product_dict['pathrow'] = path + row
-
-                product_dict['land_cloud_percent'] = next((field['value']
-                                                        for field in detailed_metadata
-                                                            if field['fieldName'] == 'Land Cloud Cover'), None)
-
-                product_dict['cloud_percent'] = next((field['value']
-                                                        for field in detailed_metadata
-                                                            if field['fieldName'] == 'Scene Cloud Cover'), None)
-
-                product_dict['instrument'] = next((field['value']
-                                                        for field in detailed_metadata
-                                                            if field['fieldName'] == 'Sensor Identifier'), None)
-
-                product_dict['sat_name'] = 'LANDSAT8'
+            for r in product_list:
+                if r['platform_name'] == 'Landsat-8':
+                    product_dict = dict(r)
+                    # start time = '2017:135:18:29:18.4577340'
+                    # datetime.strptime('Jun 1 2005  1:33PM', '%Y:%j:%H:%M:%S.%f')
+                    # Iterate through metadata list, find the field, convert to datetime obj,
+                    # select the first one
+                    # print(r)
 
 
-                result_list.append(product_dict)
+                    detailed_metadata = [md for md in detailed_metadata_list if md['entityId'] == r['entity_id']][0]['metadataFields']
+                    product_dict['detailed_metadata'] = detailed_metadata
 
-            elif r['platform_name'] == 'Sentinel-2':
-                logging.info('Sentinel2 detailed metadata being populated')
+                    utm_zone = [r['value'] for r in product_dict['detailed_metadata'] if r['fieldName'] == 'UTM Zone'][0]
+                    center_latitude = [r['value'] for r in product_dict['detailed_metadata'] if r['fieldName'] == 'Center Latitude'][0]
+                    north_south = center_latitude[-1]
+                    proj_start = '326' if north_south == 'N' else '327'
+                    product_dict['epsg_code'] = proj_start + str(utm_zone)
 
-                product_dict = dict(r) # copy the plain product dict without detailed metadata
+                    product_dict['vendor_name'] = r['name']
 
-                detailed_metadata = [md for md in detailed_metadata_list if md['entityId'] == r['entity_id']][0]['metadataFields']
-                product_dict['detailed_metadata'] = detailed_metadata
+                    product_dict['collection_category'] = next((field['value']
+                                                            for field in detailed_metadata
+                                                                if field['fieldName'] == 'Collection Category'), None)
 
-                product_dict['epsg_code'] = [r['value'] for r in product_dict['detailed_metadata'] if r['fieldName'] == 'EPSG Code'][0]
+                    product_dict['acquisition_start'] = next((datetime.strptime(field['value'][:-2], '%Y:%j:%H:%M:%S.%f')
+                                                            for field in detailed_metadata
+                                                                if field['fieldName'] == 'Start Time'), None)
 
-                # start time = '2017:135:18:29:18.4577340'
-                # datetime.strptime('Jun 1 2005  1:33PM', '%Y:%j:%H:%M:%S.%f')
-                # Iterate through metadata list, find the field, convert to datetime obj,
-                # select the first one
-                # Acquisition Start Date', 'descriptionLink': 'https://lta.cr.usgs.gov/Sentinel2#acqu
-                # isition_date_start', 'value': '2018-05-02T18:40:47.049Z'},
-                product_dict['acquisition_start'] = next((datetime.strptime(field['value'][:-2], '%Y-%m-%dT%H:%M:%S.%f')
-                                                        for field in detailed_metadata
-                                                            if field['fieldName'] == 'Acquisition Start Date'), None)
+                    product_dict['acquisition_end'] = next((datetime.strptime(field['value'][:-2], '%Y:%j:%H:%M:%S.%f')
+                                                            for field in detailed_metadata
+                                                                if field['fieldName'] == 'Stop Time'), None)
 
-                product_dict['acquisition_end'] = next((datetime.strptime(field['value'][:-2], '%Y-%m-%dT%H:%M:%S.%f')
-                                                        for field in detailed_metadata
-                                                            if field['fieldName'] == 'Acquisition End Date'), None)
+                    path = next((field['value']
+                                                            for field in detailed_metadata
+                                                                if field['fieldName'] == 'WRS Path'), None)
+                    row = next((field['value']
+                                                            for field in detailed_metadata
+                                                                if field['fieldName'] == 'WRS Row'), None)
+                    product_dict['pathrow'] = path + row
 
-                product_dict['cloud_percent'] = next((field['value']
-                                                        for field in detailed_metadata
-                                                            if field['fieldName'] == 'Cloud Cover'), None)
+                    product_dict['land_cloud_percent'] = next((field['value']
+                                                            for field in detailed_metadata
+                                                                if field['fieldName'] == 'Land Cloud Cover'), None)
 
-                # TODO: Create a converter that converts PATH/ROW to MGRS and vice Versa
-                product_dict['mgrs'] = next((field['value']
-                                                        for field in detailed_metadata
-                                                            if field['fieldName'] == 'Tile Number'), None)
-                product_dict['api_source'] = 'usgs_ee'
+                    product_dict['cloud_percent'] = next((field['value']
+                                                            for field in detailed_metadata
+                                                                if field['fieldName'] == 'Scene Cloud Cover'), None)
 
-                product_dict['sat_name'] = 'Sentinel2'
+                    product_dict['instrument'] = next((field['value']
+                                                            for field in detailed_metadata
+                                                                if field['fieldName'] == 'Sensor Identifier'), None)
 
-                # Have to a bunch of conversions here becuase the usgs product vendor id does not match the MGRS
-                # of the other properties
-                summary_string = product_dict['summary'].split(',')[0][11:]
+                    product_dict['sat_name'] = 'LANDSAT8'
 
-                if summary_string[:7] == 'S2A_OPER':
-                    for r in product_dict['detailed_metadata']:
-                         if r['fieldName'] == 'Vendor Product ID':
-                             r['value'] = summary_string
-                else:
-                    vendor_name = [r['value'] for r in product_dict['detailed_metadata'] if r['fieldName'] == 'Vendor Product ID'][0]
-                    temp_arr = vendor_name.split('_')
-                    temp_arr[5] = product_dict['mgrs']
-                    correct_product_name = '_'.join(temp_arr)
 
-                product_dict['vendor_name'] = correct_product_name
-                result_list.append(product_dict)
+                    result_list.append(product_dict)
+
+                elif r['platform_name'] == 'Sentinel-2':
+                    logging.info('Sentinel2 detailed metadata being populated')
+
+                    product_dict = dict(r) # copy the plain product dict without detailed metadata
+
+                    detailed_metadata = [md for md in detailed_metadata_list if md['entityId'] == r['entity_id']][0]['metadataFields']
+                    product_dict['detailed_metadata'] = detailed_metadata
+
+                    product_dict['epsg_code'] = [r['value'] for r in product_dict['detailed_metadata'] if r['fieldName'] == 'EPSG Code'][0]
+
+                    # start time = '2017:135:18:29:18.4577340'
+                    # datetime.strptime('Jun 1 2005  1:33PM', '%Y:%j:%H:%M:%S.%f')
+                    # Iterate through metadata list, find the field, convert to datetime obj,
+                    # select the first one
+                    # Acquisition Start Date', 'descriptionLink': 'https://lta.cr.usgs.gov/Sentinel2#acqu
+                    # isition_date_start', 'value': '2018-05-02T18:40:47.049Z'},
+                    product_dict['acquisition_start'] = next((datetime.strptime(field['value'][:-2], '%Y-%m-%dT%H:%M:%S.%f')
+                                                            for field in detailed_metadata
+                                                                if field['fieldName'] == 'Acquisition Start Date'), None)
+
+                    product_dict['acquisition_end'] = next((datetime.strptime(field['value'][:-2], '%Y-%m-%dT%H:%M:%S.%f')
+                                                            for field in detailed_metadata
+                                                                if field['fieldName'] == 'Acquisition End Date'), None)
+
+                    product_dict['cloud_percent'] = next((field['value']
+                                                            for field in detailed_metadata
+                                                                if field['fieldName'] == 'Cloud Cover'), None)
+
+                    # TODO: Create a converter that converts PATH/ROW to MGRS and vice Versa
+                    product_dict['mgrs'] = next((field['value']
+                                                            for field in detailed_metadata
+                                                                if field['fieldName'] == 'Tile Number'), None)
+                    product_dict['api_source'] = 'usgs_ee'
+
+                    product_dict['sat_name'] = 'Sentinel2'
+
+                    # Have to a bunch of conversions here becuase the usgs product vendor id does not match the MGRS
+                    # of the other properties
+                    summary_string = product_dict['summary'].split(',')[0][11:]
+
+                    if summary_string[:7] == 'S2A_OPER':
+                        for r in product_dict['detailed_metadata']:
+                            if r['fieldName'] == 'Vendor Product ID':
+                                r['value'] = summary_string
+                    else:
+                        vendor_name = [r['value'] for r in product_dict['detailed_metadata'] if r['fieldName'] == 'Vendor Product ID'][0]
+                        temp_arr = vendor_name.split('_')
+                        temp_arr[5] = product_dict['mgrs']
+                        correct_product_name = '_'.join(temp_arr)
+
+                    product_dict['vendor_name'] = correct_product_name
+                    result_list.append(product_dict)
 
         return result_list
 
@@ -1481,7 +1442,7 @@ class L8Downloader:
         }
 
         try:
-            r = requests.post(dataset_url, payload)
+            r = requests.get(dataset_url, params=payload, timeout=300)
         except BaseException as e:
             self.logger.warning(str(e))
         else:
@@ -1529,7 +1490,7 @@ class L8Downloader:
         }
 
         try:
-            r = requests.post(dataset_url, payload)
+            r = requests.get(dataset_url, params=payload, timeout=300)
         except BaseException as e:
             self.logger.warning(str(e))
         else:
@@ -1588,7 +1549,7 @@ class L8Downloader:
             "jsonRequest": json.dumps(data)
         }
         try:
-            r = requests.post(dataset_url, payload)
+            r = requests.get(dataset_url, params=payload, timeout=300)
         except BaseException as e:
             self.logger.warning(str(e))
         else:
@@ -1701,7 +1662,7 @@ class L8Downloader:
             "jsonRequest": json.dumps(data)
         }
         try:
-            r = requests.post(dataset_url, payload)
+            r = requests.get(dataset_url, params=payload, timeout=300)
         except BaseException as e:
             self.logger.warning(str(e))
 
@@ -1964,14 +1925,28 @@ class L8Downloader:
             r = requests.get(url='https://espa.cr.usgs.gov/api/v1/order-status/{}'.format(order_id), auth=(username, password), timeout=60*5)
         except BaseException as e:
             self.logger.warning(str(e))
+            return None
         else:
-            response = r.json()
+            self.logger.debug(r)
+            self.logger.debug(r.text)
             self.logger.debug(r.status_code)
+
+            
             if r.status_code == 200:
-                if response['status'] == 'complete':
-                    return True
+                try:
+                    data = r.json()
+                except BaseException as e:
+                    self.logger.error('Something went wrong trying to decode the JSON from the API response.')
+                    self.logger.error(str(e))
+                    return None
                 else:
-                    return False
+                    if data['status'] == 'complete':
+                        return True
+                    else:
+                        return False
+            elif r.status_code == 301:
+                self.logger.debug(r.headers)
+                return None
             else:
                 return False
 
@@ -2073,6 +2048,7 @@ class L8Downloader:
                         update_throttle_threshold = 1  # Update every percent change
                         
                         while not success and attempts < self.max_attempts:
+                            bytes_since_last_update = 0
                             try:
                                 attempts += 1
                                 with open(file_path, 'wb') as f:
@@ -2080,6 +2056,7 @@ class L8Downloader:
                                         if chunk: # filter out keep-alive new chunks
                                             f.write(chunk)
                                             transfer_progress += chunk_size
+                                            bytes_since_last_update += chunk_size
                                             transfer_percent = round(
                                                 min(100, (transfer_progress / file_size) * 100), 2
                                             )
@@ -2093,8 +2070,8 @@ class L8Downloader:
                                             ) > update_throttle_threshold:
                                                 if callback:
                                                     self.logger.debug('Calling task update state callback')
-                                                    item_progress_dict[item["name"]] = {"file_size": file_size, "download": transfer_percent}
-                                                    callback(item_progress_dict)
+                                                    callback(item["name"], file_size, bytes_since_last_update)
+                                                    bytes_since_last_update = 0
                                                 
                                                 previous_update = transfer_percent
                             except Exception as e:
