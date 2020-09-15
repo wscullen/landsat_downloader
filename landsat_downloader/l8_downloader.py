@@ -2017,8 +2017,6 @@ class L8Downloader:
                 item_list = response_json[order_id]
                 final_list = []
 
-                item_progress_dict = {}
-
                 for item in item_list:
                     self.logger.info(item)
                     download_url = item['product_dload_url']

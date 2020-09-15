@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='landsat_downloader',
-      version='0.0.3',
+      version='0.0.4',
       description='Utilities for downloading Landsat and Sentinel products from USGS',
       url='https://github.com/sscullen/landsat_downloader.git',
       author='Shaun Cullen',
