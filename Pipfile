@@ -13,7 +13,7 @@ pylint = "==2.4.3"
 requests = "==2.22.0"
 tqdm = "==4.36.1"
 tabulate = "==0.8.5"
-geomet = "==0.2.1"
+geomet = "==0.3.0"
 astroid = "==2.3.2"
 certifi = "==2019.9.11"
 chardet = "==3.0.4"
@@ -29,7 +29,7 @@ wrapt = "==1.11.2"
 PyYAML = "==5.1.2"
 
 [requires]
-python_version = "3.7"
+python_version = "3.8"
 
 [pipenv]
 allow_prereleases = true

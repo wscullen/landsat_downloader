@@ -1,0 +1,52 @@
+name: Bump version
+on:
+  push:
+    branches:
+      - master
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: '0'
+    - name: Bump version and output tag
+      id: get_tag
+      uses: anothrNick/github-tag-action@1.26.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        WITH_V: true
+        DEFAULT_BUMP: patch
+        INITIAL_VERSION: 1.0.0
+        DRY_RUN: true
+        RELEASE_BRANCHES: master, HEAD
+    - name: Autobump version
+      run: |
+        echo ${{ steps.get_tag.outputs.new_tag }}
+        # from refs/tags/v1.2.3 get 1.2.3
+        VERSION_FILE='setup.py'
+        # ensure the placeholder is there. If grep doesn't find the placeholder
+        # it exits with exit code 1 and github actions aborts the build. 
+        sed -E -i "s|v[0-9]+\.[0-9]+\.[0-9]+\s*|${{ steps.get_tag.outputs.new_tag }}|g" setup.py
+        cat setup.py
+      shell: bash
+    - name: Update setup.py
+      id: update_master
+      uses: test-room-7/action-update-file@v1
+      with:
+        file-path: setup.py
+        commit-msg: Update setup.py
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Checkout latest
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: '0'
+        ref: ${{ steps.update_master.outputs.commit-sha }}
+    - name: Bump version and push tag
+      uses: anothrNick/github-tag-action@1.26.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        WITH_V: true
+        DEFAULT_BUMP: patch
+        INITIAL_VERSION: 1.0.0
+        RELEASE_BRANCHES: master, HEAD
