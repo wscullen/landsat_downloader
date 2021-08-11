@@ -19,3 +19,4 @@ test/test_data/*
 Pipfile.lock
 *.pyc
 *.log
+landsat_downloader.egg-info/
