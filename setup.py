@@ -1,6 +1,6 @@
 from setuptools import setup
 
-__version__ = "v1.0.1"
+__version__ = "v1.0.2"
 
 setup(
     name="landsat_downloader",
