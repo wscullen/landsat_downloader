@@ -185,7 +185,7 @@ class L8Downloader:
 
             auth_timestamp = authcache["timestamp"]
             auth_datetime = datetime.fromtimestamp(auth_timestamp)
-            time_delta = auth_datetime - datetime.now()
+            time_delta = datetime.now() - auth_datetime
 
             if time_delta > timedelta(hours=2):
                 self.logger.info("API key has expired (older than 2 hours)")
@@ -528,18 +528,18 @@ class L8Downloader:
                 product_dict["uuid"] = result["entityId"]
 
                 thumbnail_url = [
+                    browse["thumbnailPath"]
+                    for browse in result["browse"]
+                    if browse["browseName"] == "LandsatLook Natural Color Preview Image"
+                ][0]
+                preview_url = [
                     browse["browsePath"]
                     for browse in result["browse"]
                     if browse["browseName"] == "LandsatLook Natural Color Preview Image"
                 ][0]
-                hq_preview_url = [
-                    browse["browsePath"]
-                    for browse in result["browse"]
-                    if browse["browseName"] == "LandsatLook Quality Preview Image"
-                ][0]
 
                 product_dict["thumbnail_url"] = thumbnail_url
-                product_dict["hq_preview_url"] = hq_preview_url
+                product_dict["preview_url"] = preview_url
                 product_dict["options"] = [
                     key for key in result["options"].keys() if result["options"][key]
                 ]
@@ -561,9 +561,34 @@ class L8Downloader:
                     if metadata_entry["fieldName"] == "WRS Row"
                 ][0]
 
+                # acquistion start, end
+                start_time = [
+                    metadata_entry["value"].strip()
+                    for metadata_entry in result["metadata"]
+                    if metadata_entry["fieldName"] == "Start Time"
+                ][0]
+
+                product_dict["acquisition_start"] = datetime.strptime(
+                    start_time[:-1], "%Y:%j:%H:%M:%S.%f"
+                )
+
+                stop_time = [
+                    metadata_entry["value"].strip()
+                    for metadata_entry in result["metadata"]
+                    if metadata_entry["fieldName"] == "Stop Time"
+                ][0]
+
+                # 2021:180:18:17:24.1376100
+                product_dict["acquisition_end"] = datetime.strptime(
+                    stop_time[:-1], "%Y:%j:%H:%M:%S.%f"
+                )
+
                 # TODO: Create a converter that converts PATH/ROW to MGRS and vice Versa  "fieldName":"WRS Path",
                 product_dict["path"] = path
                 product_dict["row"] = row
+                product_dict["pathrow"] = path + row
+
+                product_dict["mgrs"] = "TO DO"  # TODO: fix later
 
                 # "fieldName":"Land Cloud Cover",
                 land_cloud = [
@@ -579,7 +604,7 @@ class L8Downloader:
 
                 product_dict["land_cloud_percent"] = land_cloud
                 product_dict["scene_cloud_percent"] = scene_cloud
-
+                product_dict["cloud_percent"] = scene_cloud
                 utm_zone = [
                     metadata_entry["value"]
                     for metadata_entry in result["metadata"]
@@ -587,6 +612,18 @@ class L8Downloader:
                 ][0]
 
                 product_dict["utm_zone"] = utm_zone
+
+                product_dict["api_source"] = "usgs_ee_m2m"
+
+                product_dict["vendor_name"] = "usgs_ee"
+
+                product_dict["sat_name"] = "Landsat8"
+
+                product_dict["summary"] = utm_zone = [
+                    metadata_entry["value"]
+                    for metadata_entry in result["metadata"]
+                    if metadata_entry["fieldName"] == "Landsat Product Identifier"
+                ][0]
 
                 output_result_list.append(product_dict)
 
