@@ -1,6 +1,15 @@
 from setuptools import setup
+import os
+from pathlib import Path
 
 __version__ = "v1.0.3"
+
+base_dir = os.path.dirname(os.path.realpath(__file__))
+requirements_path = Path(base_dir, "requirements.txt")
+install_requires = []
+if os.path.isfile(requirements_path):
+    with open(requirements_path) as f:
+        install_requires = f.read().splitlines()
 
 setup(
     name="landsat_downloader",
@@ -12,4 +21,5 @@ setup(
     license="MIT",
     packages=["landsat_downloader"],
     zip_safe=False,
+    install_requires=install_requires,
 )
