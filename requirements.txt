@@ -2,7 +2,7 @@ astroid==2.*
 
 certifi==2021.*
 
-chardet==3.*
+chardet==4.*
 
 click==8.*
 
