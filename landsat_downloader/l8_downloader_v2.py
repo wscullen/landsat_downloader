@@ -104,7 +104,7 @@ class L8Downloader:
         if username and password:
             user_n = username
             pass_w = password
-        else :
+        else:
             # Load config from config.yaml
             try:
                 with open(path_to_config, "r") as stream:
@@ -468,7 +468,7 @@ class L8Downloader:
                 "sceneFilter": scene_filter,
                 "maxResults": 1000,
             }
-            # print(data)
+            self.logger.debug(data)
             headers = {"X-Auth-Token": api_key}
 
             try:
