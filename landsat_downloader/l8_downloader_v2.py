@@ -97,46 +97,56 @@ class L8Downloader:
         logger.addHandler(ch)
 
         self.logger = logger
+        
+        user_n = None
+        pass_w = None
 
-        # Load config from config.yaml
-        try:
-            with open(path_to_config, "r") as stream:
-                config = yaml.safe_load(stream)
-        except yaml.YAMLError as exc:
-            self.logger.error("Problem loading config... exiting...")
-            raise ConfigFileProblem
-        except FileNotFoundError as e:
-            self.logger.error(f"Missing config file with path {path_to_config}")
-            raise e
-        except BaseException as e:
-            self.logger.error(
-                f"Unexpected problem occurred while loading config ({str(e)})"
-            )
+        if username and password:
+            user_n = username
+            pass_w = password
+        else :
+            # Load config from config.yaml
+            try:
+                with open(path_to_config, "r") as stream:
+                    config = yaml.safe_load(stream)
+            except yaml.YAMLError as exc:
+                self.logger.error("Problem loading config... exiting...")
+                raise ConfigFileProblem
+            except FileNotFoundError as e:
+                self.logger.error(f"Missing config file with path {path_to_config}")
+                raise e
+            except BaseException as e:
+                self.logger.error(
+                    f"Unexpected problem occurred while loading config ({str(e)})"
+                )
 
-        required_config_keys = [
-            "USGS_EE_USER",
-            "USGS_EE_PASS",
-        ]
+            required_config_keys = [
+                "USGS_EE_USER",
+                "USGS_EE_PASS",
+            ]
 
-        self.logger.debug(config.keys())
+            self.logger.debug(config.keys())
 
-        try:
-            config.keys()
-        except AttributeError as e:
-            raise ConfigFileProblem
+            try:
+                config.keys()
+            except AttributeError as e:
+                raise ConfigFileProblem
 
-        # Find the difference between sets
-        # required_config_keys can be a sub set of config.keys()
-        missing_keys = set(required_config_keys) - set(list(config.keys()))
+            # Find the difference between sets
+            # required_config_keys can be a sub set of config.keys()
+            missing_keys = set(required_config_keys) - set(list(config.keys()))
 
-        if len(list(missing_keys)) != 0:
-            self.logger.error(
-                f"Config file loaded but missing critical vars, {missing_keys}"
-            )
-            raise ConfigValueMissing
+            if len(list(missing_keys)) != 0:
+                self.logger.error(
+                    f"Config file loaded but missing critical vars, {missing_keys}"
+                )
+                raise ConfigValueMissing
 
-        self.username = config["USGS_EE_USER"]
-        self.password = config["USGS_EE_PASS"]
+            user_n = config["USGS_EE_USER"]
+            pass_w = config["USGS_EE_PASS"]
+
+        self.username = user_n
+        self.password = pass_w
 
         if not (bool(self.username) and bool(self.password)):
             self.logger.error("Missing auth env vars, MISSING USERNAME OR PASSWORD")
