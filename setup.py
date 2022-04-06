@@ -2,7 +2,7 @@ from setuptools import setup
 import os
 from pathlib import Path
 
-__version__ = "v1.0.10"
+__version__ = "v1.0.11"
 
 base_dir = os.path.dirname(os.path.realpath(__file__))
 requirements_path = Path(base_dir, "requirements.txt")
