@@ -927,7 +927,7 @@ class L8Downloader:
             self.logger.error(
                 "Unable to download all files. Attempts: {}".format(attempts)
             )
-            return TaskStatus(False, None, None)
+            return TaskStatus(False, len(download_requests), None)
 
 
 def authenticate(self):
