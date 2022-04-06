@@ -79,18 +79,20 @@ from .utils import TaskStatus, ConfigFileProblem, ConfigValueMissing, AuthFailur
 
 
 class L8Downloader:
-
-    def __init__(self, path_to_config='config.yaml', username=None, password=None, verbose=False):
+    def __init__(
+        self, path_to_config="config.yaml", username=None, password=None, verbose=False
+    ):
 
         # create logger
-        logging.basicConfig(filename='example.log', level=logging.DEBUG)
+        logging.basicConfig(filename="example.log", level=logging.DEBUG)
         self.logger = logging.getLogger(__name__)
-        
 
         # create console handler and set level to debug
         ch = logging.StreamHandler()
         ch.setLevel(logging.DEBUG)
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
         ch.setFormatter(formatter)
         self.logger.addHandler(ch)
 
@@ -108,7 +110,7 @@ class L8Downloader:
             raise e
 
         except BaseException as e:
-            self.logger.error('Unknown problem occurred while loading config')
+            self.logger.error("Unknown problem occurred while loading config")
 
         required_config_keys = [
             "USGS_EE_USER",
@@ -127,14 +129,16 @@ class L8Downloader:
         missing_keys = set(required_config_keys) - set(list(config.keys()))
 
         if len(list(missing_keys)) != 0:
-            self.logger.error(f"Config file loaded but missing critical vars, {missing_keys}")
+            self.logger.error(
+                f"Config file loaded but missing critical vars, {missing_keys}"
+            )
             raise ConfigValueMissing
 
-        self.username = config['USGS_EE_USER']
-        self.password = config['USGS_EE_PASS']
+        self.username = config["USGS_EE_USER"]
+        self.password = config["USGS_EE_PASS"]
 
         if not (bool(self.username) and bool(self.password)):
-            self.logger.error('Missing auth env vars, MISSING USERNAME OR PASSWORD')
+            self.logger.error("Missing auth env vars, MISSING USERNAME OR PASSWORD")
             raise ConfigValueMissing
 
         self.url_base_string = "https://earthexplorer.usgs.gov/inventory/json/v/1.4.1/"
@@ -142,10 +146,7 @@ class L8Downloader:
         self.url_get_string = self.url_post_string + "?jsonRequest={}"
         self.path_to_config = os.path.dirname(path_to_config)
 
-        self.auth_token = {
-            'token': None,
-            'last_active': None
-        }
+        self.auth_token = {"token": None, "last_active": None}
 
         self.max_attempts = 3
         self.initial_delay = 15
@@ -154,19 +155,19 @@ class L8Downloader:
         self.verbose = verbose
 
     def authenticate(self):
-        """ Read the .json config file to get the user name and password"""
+        """Read the .json config file to get the user name and password"""
 
         # self.logger.debug('Attempting a direct login')
         # print(f'config path: {self.path_to_config}')
-        auth_file = os.path.join(self.path_to_config, 'authcache.json')
+        auth_file = os.path.join(self.path_to_config, "authcache.json")
         now = time.time()
 
         if os.path.isfile(auth_file):
             # self.logger.debug('an authcache file is present')
             # print('found a auth cache file')
-            with open(auth_file, 'r') as infile:
+            with open(auth_file, "r") as infile:
                 auth_token = json.load(infile)
-                time_diff = now - auth_token['last_active']
+                time_diff = now - auth_token["last_active"]
 
             if time_diff <= (self.api_timeout):
                 # self.logger.debug('time diff is {}, less than 3600 seconds'.format(time_diff))
@@ -184,44 +185,47 @@ class L8Downloader:
         else:
             # print('ACTUALLY TRYING TO AUTHENTICATE NOW')
             data = {
-                    "username": self.username,
-                    "password": self.password,
-                    "authType": "EROS",
-                    "catalogId": "EE"
+                "username": self.username,
+                "password": self.password,
+                "authType": "EROS",
+                "catalogId": "EE",
             }
 
             login_url = self.url_post_string.format("login")
 
-            payload = {
-                "jsonRequest": json.dumps(data)
-            }
+            payload = {"jsonRequest": json.dumps(data)}
 
             try:
                 r = requests.post(login_url, payload)
             except BaseException as e:
-                self.logger.warning(f'There was a problem authenticating, connection to server failed. Exception: {str(e)}')
+                self.logger.warning(
+                    f"There was a problem authenticating, connection to server failed. Exception: {str(e)}"
+                )
                 return None
             else:
-                
+
                 if r.status_code == 200:
                     result = r.json()
 
-                    if result['error'] != '':
-                        self.logger.warning(f"Unable to authenticate, error: {result['error']}, errorInfo: {result['errorCode']}")
+                    if result["error"] != "":
+                        self.logger.warning(
+                            f"Unable to authenticate, error: {result['error']}, errorInfo: {result['errorCode']}"
+                        )
                         return None
                     else:
 
-                        self.auth_token['token'] = result['data']
-                        self.auth_token['last_active'] = time.time()
+                        self.auth_token["token"] = result["data"]
+                        self.auth_token["last_active"] = time.time()
 
-                        with open(auth_file, 'w') as outfile:
+                        with open(auth_file, "w") as outfile:
                             json.dump(self.auth_token, outfile)
 
                         return self.auth_token
 
                 else:
                     self.logger.warning(
-                        f'There was a problem authenticating, status_code = {r.status_code}')
+                        f"There was a problem authenticating, status_code = {r.status_code}"
+                    )
                     return None
 
     def auth_attempt(self):
@@ -229,19 +233,19 @@ class L8Downloader:
 
         # self.logger.debug('Attempting to login...')
 
-        attempts=0
-        delay=self.initial_delay
+        attempts = 0
+        delay = self.initial_delay
 
-        self.logger.debug('Trying to auth...')
+        self.logger.debug("Trying to auth...")
         result = self.authenticate()
-        self.logger.debug(f'Suth result {result}')
+        self.logger.debug(f"Suth result {result}")
 
         while attempts < self.max_attempts:
-            result=self.authenticate()
+            result = self.authenticate()
             if result:
                 return result
 
-            self.logger.warning('Problems authenticating, trying again after delay...')
+            self.logger.warning("Problems authenticating, trying again after delay...")
             time.sleep(delay)
             delay *= 2
             attempts += 1
@@ -250,37 +254,41 @@ class L8Downloader:
         return None
 
     def check_auth(self):
-        self.logger.info('Checking auth status...')
-        now=time.time()
+        self.logger.info("Checking auth status...")
+        now = time.time()
 
-        if self.auth_token['token']:
-            time_diff=now - self.auth_token['last_active']
+        if self.auth_token["token"]:
+            time_diff = now - self.auth_token["last_active"]
 
             if time_diff > (self.api_timeout):
-                self.logger.debug('Trying to authenticate again because auth token has timed out.')
+                self.logger.debug(
+                    "Trying to authenticate again because auth token has timed out."
+                )
                 auth_result = self.auth_attempt()
 
                 if auth_result:
                     return auth_result
                 else:
-                    raise AuthFailure('Cannot connect to auth api end point')
+                    raise AuthFailure("Cannot connect to auth api end point")
 
         else:
-            self.logger.debug('Trying to authenticate because there is no previous auth token.')
+            self.logger.debug(
+                "Trying to authenticate because there is no previous auth token."
+            )
             auth_result = self.auth_attempt()
 
             if auth_result:
                 return auth_result
             else:
-                raise AuthFailure('Cannot connect to auth api end point')
+                raise AuthFailure("Cannot connect to auth api end point")
 
     def update_auth_time(self):
 
-        self.auth_token['last_active']=time.time()
+        self.auth_token["last_active"] = time.time()
 
-        auth_file=os.path.join(self.path_to_config, 'authcache.json')
+        auth_file = os.path.join(self.path_to_config, "authcache.json")
 
-        with open(auth_file, 'w') as outfile:
+        with open(auth_file, "w") as outfile:
             json.dump(self.auth_token, outfile)
 
     def create_data_search_object_by_polygon(self, dataset_name, polygon, query_dict):
@@ -296,117 +304,57 @@ class L8Downloader:
         upperrightX = env[1]
         upperrightY = env[3]
 
-        data =  {
+        data = {
             "datasetName": dataset_name,
-            "apiKey": self.auth_token['token'],
+            "apiKey": self.auth_token["token"],
             "spatialFilter": {
                 "filterType": "mbr",
-                    "lowerLeft": {
-                "latitude": lowerleftY,
-                "longitude": lowerleftX
-                    },
-                    "upperRight": {
-                "latitude": upperrightY,
-                "longitude": upperrightX
-                    }
+                "lowerLeft": {"latitude": lowerleftY, "longitude": lowerleftX},
+                "upperRight": {"latitude": upperrightY, "longitude": upperrightX},
             },
             "temporalFilter": {
-                        "startDate": query_dict['date_start'].strftime("%Y-%m-%d"),
-                        "endDate": query_dict['date_end'].strftime("%Y-%m-%d")
+                "startDate": query_dict["date_start"].strftime("%Y-%m-%d"),
+                "endDate": query_dict["date_end"].strftime("%Y-%m-%d"),
             },
             "maxCloudCover": query_dict["cloud_percent"],
-            "includeUnknownCloudCover": True
+            "includeUnknownCloudCover": True,
         }
 
         return data
 
     def search_datasets(self, search_term):
         """
-            example route /datasets
+        example route /datasets
 
-            example query
-            {
-                "datasetName": "L8",
-            "spatialFilter": {
-                "filterType": "mbr",
-                "lowerLeft": {
-                        "latitude": 44.60847,
-                        "longitude": -99.69639
-                },
-                "upperRight": {
-                        "latitude": 44.60847,
-                        "longitude": -99.69639
-                }
+        example query
+        {
+            "datasetName": "L8",
+        "spatialFilter": {
+            "filterType": "mbr",
+            "lowerLeft": {
+                    "latitude": 44.60847,
+                    "longitude": -99.69639
             },
-            "temporalFilter": {
-                "startDate": "2014-01-01",
-                "endDate": "2014-12-01"
-            },
-                "apiKey": "USERS API KEY"
+            "upperRight": {
+                    "latitude": 44.60847,
+                    "longitude": -99.69639
             }
+        },
+        "temporalFilter": {
+            "startDate": "2014-01-01",
+            "endDate": "2014-12-01"
+        },
+            "apiKey": "USERS API KEY"
+        }
         """
 
         self.check_auth()
 
-        data={
-            "datasetName": search_term,
-            "apiKey": self.auth_token['token']
-        }
+        data = {"datasetName": search_term, "apiKey": self.auth_token["token"]}
 
         dataset_url = self.url_post_string.format("datasets")
 
-        payload = {
-            "jsonRequest": json.dumps(data)
-        }
-
-        try: 
-            r = requests.get(dataset_url, params=payload, timeout=300)
-        except BaseException as e:
-            self.logger.warning(str(e))
-        else:
-            result = r.json()
-
-            if r.status_code == 200 and result['errorCode'] == None:
-                self.update_auth_time()
-                if self.verbose:
-                    self.list_results(result['data'], ['datasetName',
-                                                    'datasetFullName',
-                                                    'startDate',
-                                                    'endDate',
-                                                    'supportDownload',
-                                                    'totalScenes',
-                                                    'supportBulkDownload',
-                                                    'bulkDownloadOrderLimit',
-                                                    'supportCloudCover'
-                                                    ],
-                                                    'search_datasets')
-
-            else:
-                self.logger.warning(f"There was a problem getting datasets, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}")
-
-    def get_dataset_field_ids(self, dataset_name):
-        """
-            example route /datasetfields
-
-            example query
-            {
-                "datasetName": "SENTINEL_2A",
-                "apiKey": "USERS API KEY"
-            }
-        """
-
-        self.check_auth()
-
-        data={
-            "datasetName": dataset_name,
-            "apiKey": self.auth_token['token']
-        }
-
-        dataset_url = self.url_post_string.format("datasetfields")
-
-        payload = {
-            "jsonRequest": json.dumps(data)
-        }
+        payload = {"jsonRequest": json.dumps(data)}
 
         try:
             r = requests.get(dataset_url, params=payload, timeout=300)
@@ -415,27 +363,76 @@ class L8Downloader:
         else:
             result = r.json()
 
-            if r.status_code == 200 and result['errorCode'] == None:
+            if r.status_code == 200 and result["errorCode"] == None:
                 self.update_auth_time()
                 if self.verbose:
-                    self.list_results(result['data'], ['fieldId',
-                                                    'name',
-                                                    'fieldLink',
-                                                    'valueList'
-                                                    ],
-                                                    'get_dataset_field_id')
-
-                return result['data']
+                    self.list_results(
+                        result["data"],
+                        [
+                            "datasetName",
+                            "datasetFullName",
+                            "startDate",
+                            "endDate",
+                            "supportDownload",
+                            "totalScenes",
+                            "supportBulkDownload",
+                            "bulkDownloadOrderLimit",
+                            "supportCloudCover",
+                        ],
+                        "search_datasets",
+                    )
 
             else:
-                self.logger.warning(f"There was a problem getting datasets, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}")
+                self.logger.warning(
+                    f"There was a problem getting datasets, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}"
+                )
 
+    def get_dataset_field_ids(self, dataset_name):
+        """
+        example route /datasetfields
+
+        example query
+        {
+            "datasetName": "SENTINEL_2A",
+            "apiKey": "USERS API KEY"
+        }
+        """
+
+        self.check_auth()
+
+        data = {"datasetName": dataset_name, "apiKey": self.auth_token["token"]}
+
+        dataset_url = self.url_post_string.format("datasetfields")
+
+        payload = {"jsonRequest": json.dumps(data)}
+
+        try:
+            r = requests.get(dataset_url, params=payload, timeout=300)
+        except BaseException as e:
+            self.logger.warning(str(e))
+        else:
+            result = r.json()
+
+            if r.status_code == 200 and result["errorCode"] == None:
+                self.update_auth_time()
+                if self.verbose:
+                    self.list_results(
+                        result["data"],
+                        ["fieldId", "name", "fieldLink", "valueList"],
+                        "get_dataset_field_id",
+                    )
+
+                return result["data"]
+
+            else:
+                self.logger.warning(
+                    f"There was a problem getting datasets, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}"
+                )
 
     def list_results(self, result, key_list, name_of_api_call, write_to_csv=False):
-
         def shorten_string(string_to_shorten):
             if len(string_to_shorten) > 35:
-                return string_to_shorten[:25] + ' ... ' + string_to_shorten[-10:]
+                return string_to_shorten[:25] + " ... " + string_to_shorten[-10:]
             else:
                 return string_to_shorten
 
@@ -453,30 +450,29 @@ class L8Downloader:
             result_list.append(row)
             result_list_full.append(row_full)
 
-        self.logger.info(tabulate(result_list, headers=key_list, tablefmt='orgtbl'))
+        self.logger.info(tabulate(result_list, headers=key_list, tablefmt="orgtbl"))
 
         if write_to_csv:
             now = datetime.now()
 
-            file_name = name_of_api_call + now.strftime('%Y%m%d_%H%M') + '.csv'
+            file_name = name_of_api_call + now.strftime("%Y%m%d_%H%M") + ".csv"
 
-            with open(file_name, 'w', newline='') as csvfile:
-                writer = csv.writer(csvfile, delimiter=',',
-                                        quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            with open(file_name, "w", newline="") as csvfile:
+                writer = csv.writer(
+                    csvfile, delimiter=",", quotechar="|", quoting=csv.QUOTE_MINIMAL
+                )
                 writer.writerow(key_list)
                 for row in result_list_full:
                     writer.writerow(row)
 
     def get_total_products(self, data):
-        """ Used in conjunction with search for products to get ALL results"""
+        """Used in conjunction with search for products to get ALL results"""
 
         self.check_auth()
 
         dataset_url = self.url_post_string.format("hits")
 
-        payload = {
-            "jsonRequest": json.dumps(data)
-        }
+        payload = {"jsonRequest": json.dumps(data)}
 
         try:
             r = requests.post(dataset_url, payload, timeout=60)
@@ -485,100 +481,110 @@ class L8Downloader:
         else:
             result = r.json()
 
-            if r.status_code == 200 and result['errorCode'] == None:
-                return result['data']
+            if r.status_code == 200 and result["errorCode"] == None:
+                return result["data"]
             else:
                 return -1
 
-    def populate_result_list(self, result, platform_name, dataset_name, detailed=False, realtime=False):
-        """ Takes a dictionary of results from the query, returns a standardized
-            product_dictionary with correct keys for the metadata
+    def populate_result_list(
+        self, result, platform_name, dataset_name, detailed=False, realtime=False
+    ):
+        """Takes a dictionary of results from the query, returns a standardized
+        product_dictionary with correct keys for the metadata
         """
 
         result_list = []
-        if platform_name == 'Landsat-8':
+        if platform_name == "Landsat-8":
 
-            for r in result['data']['results']:
+            for r in result["data"]["results"]:
                 product_dict = {}
-                product_dict['entity_id'] = r['entityId']
+                product_dict["entity_id"] = r["entityId"]
 
-                product_dict['api_source'] = 'usgs_ee'
-                product_dict['download_source'] = None
-                product_dict['footprint'] = wkt.dumps(r['spatialFootprint'], decimals=5)
+                product_dict["api_source"] = "usgs_ee"
+                product_dict["download_source"] = None
+                product_dict["footprint"] = wkt.dumps(r["spatialFootprint"], decimals=5)
 
-                geom = ogr.CreateGeometryFromWkt(product_dict['footprint'])
+                geom = ogr.CreateGeometryFromWkt(product_dict["footprint"])
                 # Get Envelope returns a tuple (minX, maxX, minY, maxY)
                 env = geom.GetEnvelope()
 
                 def envelope_to_wkt(env_tuple):
-                    coord1 = str(env_tuple[0]) + ' ' + str(env_tuple[3])
-                    coord2 = str(env_tuple[1]) + ' ' + str(env_tuple[3])
-                    coord3 = str(env_tuple[1]) + ' ' + str(env_tuple[2])
-                    coord4 = str(env_tuple[0]) + ' ' + str(env_tuple[2])
+                    coord1 = str(env_tuple[0]) + " " + str(env_tuple[3])
+                    coord2 = str(env_tuple[1]) + " " + str(env_tuple[3])
+                    coord3 = str(env_tuple[1]) + " " + str(env_tuple[2])
+                    coord4 = str(env_tuple[0]) + " " + str(env_tuple[2])
 
-                    wkt_string = "POLYGON(({}, {}, {}, {}, {}))".format(coord1, coord2, coord3, coord4, coord1)
+                    wkt_string = "POLYGON(({}, {}, {}, {}, {}))".format(
+                        coord1, coord2, coord3, coord4, coord1
+                    )
                     return wkt_string
 
-                product_dict['mbr'] = envelope_to_wkt(env)
+                product_dict["mbr"] = envelope_to_wkt(env)
 
-                product_dict['dataset_name'] = dataset_name
-                product_dict['name'] = r['displayId']
-                product_dict['uuid'] = r['entityId']
+                product_dict["dataset_name"] = dataset_name
+                product_dict["name"] = r["displayId"]
+                product_dict["uuid"] = r["entityId"]
 
-                product_dict['preview_url'] = r['browseUrl']
-                product_dict['manual_product_url'] = r['dataAccessUrl']
-                product_dict['manual_download_url'] = r['downloadUrl']
-                product_dict['manual_bulkorder_url'] = r['orderUrl']
-                product_dict['metadata_url'] = r['metadataUrl']
+                product_dict["preview_url"] = r["browseUrl"]
+                product_dict["manual_product_url"] = r["dataAccessUrl"]
+                product_dict["manual_download_url"] = r["downloadUrl"]
+                product_dict["manual_bulkorder_url"] = r["orderUrl"]
+                product_dict["metadata_url"] = r["metadataUrl"]
 
                 # 2017-05-25T15:17:11
-                product_dict['last_modified'] = datetime.strptime(r['modifiedDate'], '%Y-%m-%d %H:%M:%S')
-                product_dict['bulk_inprogress'] = r['bulkOrdered']
-                product_dict['summary'] = r['summary']
+                product_dict["last_modified"] = datetime.strptime(
+                    r["modifiedDate"], "%Y-%m-%d %H:%M:%S"
+                )
+                product_dict["bulk_inprogress"] = r["bulkOrdered"]
+                product_dict["summary"] = r["summary"]
 
-                product_dict['platform_name'] = platform_name
+                product_dict["platform_name"] = platform_name
 
                 # TODO: Create a converter that converts PATH/ROW to MGRS and vice Versa
-                product_dict['mgrs'] = None
+                product_dict["mgrs"] = None
 
-                product_dict['api_source'] = 'usgs_ee'
-                
+                product_dict["api_source"] = "usgs_ee"
+
                 result_list.append(product_dict)
 
-        elif platform_name == 'Sentinel-2':
-            self.logger.info('Sentinel2-result dictionary being built')
+        elif platform_name == "Sentinel-2":
+            self.logger.info("Sentinel2-result dictionary being built")
 
-            for idx, r in enumerate(result['data']['results']):
+            for idx, r in enumerate(result["data"]["results"]):
                 product_dict = {}
-                product_dict['entity_id'] = r['entityId']
-                product_dict['api_source'] = 'usgs_ee'
-                product_dict['download_source'] = None
-                product_dict['footprint'] = wkt.dumps(r['spatialFootprint'], decimals=5)
+                product_dict["entity_id"] = r["entityId"]
+                product_dict["api_source"] = "usgs_ee"
+                product_dict["download_source"] = None
+                product_dict["footprint"] = wkt.dumps(r["spatialFootprint"], decimals=5)
 
-                geom = ogr.CreateGeometryFromWkt(product_dict['footprint'])
+                geom = ogr.CreateGeometryFromWkt(product_dict["footprint"])
                 # Get Envelope returns a tuple (minX, maxX, minY, maxY)
                 env = geom.GetEnvelope()
 
                 def envelope_to_wkt(env_tuple):
-                    coord1 = str(env_tuple[0]) + ' ' + str(env_tuple[3])
-                    coord2 = str(env_tuple[1]) + ' ' + str(env_tuple[3])
-                    coord3 = str(env_tuple[1]) + ' ' + str(env_tuple[2])
-                    coord4 = str(env_tuple[0]) + ' ' + str(env_tuple[2])
+                    coord1 = str(env_tuple[0]) + " " + str(env_tuple[3])
+                    coord2 = str(env_tuple[1]) + " " + str(env_tuple[3])
+                    coord3 = str(env_tuple[1]) + " " + str(env_tuple[2])
+                    coord4 = str(env_tuple[0]) + " " + str(env_tuple[2])
 
-                    wkt_string = "POLYGON(({}, {}, {}, {}, {}))".format(coord1, coord2, coord3, coord4, coord1)
+                    wkt_string = "POLYGON(({}, {}, {}, {}, {}))".format(
+                        coord1, coord2, coord3, coord4, coord1
+                    )
                     return wkt_string
 
-                product_dict['mbr'] = envelope_to_wkt(env)
+                product_dict["mbr"] = envelope_to_wkt(env)
 
-                product_dict['dataset_name'] = dataset_name
-                product_dict['name'] = r['displayId']
-                product_dict['uuid'] = r['entityId']
+                product_dict["dataset_name"] = dataset_name
+                product_dict["name"] = r["displayId"]
+                product_dict["uuid"] = r["entityId"]
 
-                product_dict['preview_url'] = r['browseUrl']
-                product_dict['manual_product_url'] = r['dataAccessUrl']
-                product_dict['manual_download_url'] = r['downloadUrl']
-                product_dict['manual_bulkorder_url'] = "n/a"
-                product_dict['metadata_url'] = r['metadataUrl'] # TODO: know the path to the metadata file using COPERNICUSAPI, need to formalize it
+                product_dict["preview_url"] = r["browseUrl"]
+                product_dict["manual_product_url"] = r["dataAccessUrl"]
+                product_dict["manual_download_url"] = r["downloadUrl"]
+                product_dict["manual_bulkorder_url"] = "n/a"
+                product_dict["metadata_url"] = r[
+                    "metadataUrl"
+                ]  # TODO: know the path to the metadata file using COPERNICUSAPI, need to formalize it
 
                 # # WHY WAS THIS OMITED?! BECAUSE USGS DOESN't Like being hammered with requests
                 # detailed_metadata = self.search_scene_metadata(dataset_name, [product_dict['entity_id']])[0]
@@ -587,24 +593,24 @@ class L8Downloader:
                 # 2017-05-25T15:17:11
                 # product_dict['last_modified'] = datetime.strptime(r['ingestiondate'], '%Y-%m-%dT%H:%M:%S')
                 # product_dict['bulk_inprogress'] = r['bulkOrdered']
-                product_dict['summary'] = r['summary']
+                product_dict["summary"] = r["summary"]
                 # path = next((r['value']
                 #                                         for r in detailed_metadata
                 #                                             if r['fieldName'] == 'WRS Path'), None)
                 # row = next((r['value']
                 #                                         for r in detailed_metadata
                 #                                             if r['fieldName'] == 'WRS Row'), None)
-                product_dict['pathrow'] = "n/a " # TODO: MGRS to PATHROW converter
+                product_dict["pathrow"] = "n/a "  # TODO: MGRS to PATHROW converter
 
                 # product_dict['land_cloud_percent'] = next((r['value']
-                                                        # for r in detailed_metadata
-                                                        #     if r['fieldName'] == 'Land Cloud Cover'), None)
+                # for r in detailed_metadata
+                #     if r['fieldName'] == 'Land Cloud Cover'), None)
 
-                product_dict['platform_name'] = platform_name
+                product_dict["platform_name"] = platform_name
                 # product_dict['instrument'] = next((r['value']
                 #                                         for r in detailed_metadata
                 #                                             if r['fieldName'] == 'Sensor Identifier'), None)
-                product_dict['api_source'] = 'usgs_ee'
+                product_dict["api_source"] = "usgs_ee"
 
                 result_list.append(product_dict)
 
@@ -616,54 +622,65 @@ class L8Downloader:
         if not realtime:
             result_list_filtered = []
             for r in result_list:
-                if r['collection_category'] in ['T1']:
+                if r["collection_category"] in ["T1"]:
                     result_list_filtered.append(r)
 
             result_list = result_list_filtered
 
         return result_list
 
-    def search_for_products_by_name(self, dataset_name, product_name_list, query_dict, detailed=False, just_entity_ids=False, write_to_csv=False, call_count=0):
+    def search_for_products_by_name(
+        self,
+        dataset_name,
+        product_name_list,
+        query_dict,
+        detailed=False,
+        just_entity_ids=False,
+        write_to_csv=False,
+        call_count=0,
+    ):
         """
-            example route /search
+        example route /search
 
-            query_dict needs:
-            max cloud
-            start date
-            end date
+        query_dict needs:
+        max cloud
+        start date
+        end date
 
-            example query
-            {
-                "datasetName": "LANDSAT_8",
-                    "spatialFilter": {
-                        "filterType": "mbr",
-                        "lowerLeft": {
-                    "latitude": 75,
-                    "longitude": -135
-                        },
-                        "upperRight": {
-                    "latitude": 90,
-                    "longitude": -120
-                        }
+        example query
+        {
+            "datasetName": "LANDSAT_8",
+                "spatialFilter": {
+                    "filterType": "mbr",
+                    "lowerLeft": {
+                "latitude": 75,
+                "longitude": -135
                     },
-                    "temporalFilter": {
-                        "startDate": "2006-01-01",
-                        "endDate": "2007-12-01"
-                    },
-                    "additionalCriteria": {
-                        "filterType": "or",
-                        "childFilters": [
-                            {"filterType":"between","fieldId":20515,"firstValue":"0","secondValue":str(query_dict['cloud_percentage'])},
-                        ]
-                    },
-                "maxResults": 3,
-                "startingNumber": 1,
-                "sortOrder": "ASC",
-                "apiKey": "USERS API KEY"
-            }
+                    "upperRight": {
+                "latitude": 90,
+                "longitude": -120
+                    }
+                },
+                "temporalFilter": {
+                    "startDate": "2006-01-01",
+                    "endDate": "2007-12-01"
+                },
+                "additionalCriteria": {
+                    "filterType": "or",
+                    "childFilters": [
+                        {"filterType":"between","fieldId":20515,"firstValue":"0","secondValue":str(query_dict['cloud_percentage'])},
+                    ]
+                },
+            "maxResults": 3,
+            "startingNumber": 1,
+            "sortOrder": "ASC",
+            "apiKey": "USERS API KEY"
+        }
         """
 
-        self.logger.warning('This function is disabled until USGS restores metadata based querying (August 10, 2020).')
+        self.logger.warning(
+            "This function is disabled until USGS restores metadata based querying (August 10, 2020)."
+        )
         # self.check_auth()
         # platform_name = "Unknown"
 
@@ -786,7 +803,7 @@ class L8Downloader:
 
         #         self.logger.warning(result['data'])
         #         self.logger.warning(result)
-                
+
         #         if result['errorCode'] == None:
         #             self.update_auth_time()
         #             if self.verbose:
@@ -829,44 +846,53 @@ class L8Downloader:
         #         self.logger.warning(f"There was a problem getting products, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}")
         #         return []
 
-    def search_for_products(self, dataset_name, polygon, query_dict, detailed=False, just_entity_ids=False, write_to_csv=False, realtime=False):
+    def search_for_products(
+        self,
+        dataset_name,
+        polygon,
+        query_dict,
+        detailed=False,
+        just_entity_ids=False,
+        write_to_csv=False,
+        realtime=False,
+    ):
         """
-            example route /search
+        example route /search
 
-            query_dict needs:
-            max cloud
-            start date
-            end date
+        query_dict needs:
+        max cloud
+        start date
+        end date
 
-            example query
-            {
-                "datasetName": "LANDSAT_8",
-                    "spatialFilter": {
-                        "filterType": "mbr",
-                        "lowerLeft": {
-                    "latitude": 75,
-                    "longitude": -135
-                        },
-                        "upperRight": {
-                    "latitude": 90,
-                    "longitude": -120
-                        }
+        example query
+        {
+            "datasetName": "LANDSAT_8",
+                "spatialFilter": {
+                    "filterType": "mbr",
+                    "lowerLeft": {
+                "latitude": 75,
+                "longitude": -135
                     },
-                    "temporalFilter": {
-                        "startDate": "2006-01-01",
-                        "endDate": "2007-12-01"
-                    },
-                    "additionalCriteria": {
-                        "filterType": "or",
-                        "childFilters": [
-                            {"filterType":"between","fieldId":20515,"firstValue":"0","secondValue":str(query_dict['cloud_percentage'])},
-                        ]
-                    },
-                "maxResults": 3,
-                "startingNumber": 1,
-                "sortOrder": "ASC",
-                "apiKey": "USERS API KEY"
-            }
+                    "upperRight": {
+                "latitude": 90,
+                "longitude": -120
+                    }
+                },
+                "temporalFilter": {
+                    "startDate": "2006-01-01",
+                    "endDate": "2007-12-01"
+                },
+                "additionalCriteria": {
+                    "filterType": "or",
+                    "childFilters": [
+                        {"filterType":"between","fieldId":20515,"firstValue":"0","secondValue":str(query_dict['cloud_percentage'])},
+                    ]
+                },
+            "maxResults": 3,
+            "startingNumber": 1,
+            "sortOrder": "ASC",
+            "apiKey": "USERS API KEY"
+        }
         """
 
         self.check_auth()
@@ -880,30 +906,24 @@ class L8Downloader:
         upperrightX = env[1]
         upperrightY = env[3]
 
-        data =  {
+        data = {
             "datasetName": dataset_name,
-            "apiKey": self.auth_token['token'],
+            "apiKey": self.auth_token["token"],
             "spatialFilter": {
                 "filterType": "mbr",
-                    "lowerLeft": {
-                "latitude": lowerleftY,
-                "longitude": lowerleftX
-                    },
-                    "upperRight": {
-                "latitude": upperrightY,
-                "longitude": upperrightX
-                    }
+                "lowerLeft": {"latitude": lowerleftY, "longitude": lowerleftX},
+                "upperRight": {"latitude": upperrightY, "longitude": upperrightX},
             },
             "temporalFilter": {
-                        "startDate": query_dict['date_start'].strftime("%Y-%m-%d"),
-                        "endDate": query_dict['date_end'].strftime("%Y-%m-%d")
+                "startDate": query_dict["date_start"].strftime("%Y-%m-%d"),
+                "endDate": query_dict["date_end"].strftime("%Y-%m-%d"),
             },
             "maxCloudCover": query_dict["cloud_percent"],
             "includeUnknownCloudCover": True,
-            "maxResults": 1000
+            "maxResults": 1000,
         }
 
-        if dataset_name.upper() == 'LANDSAT_8_C1':
+        if dataset_name.upper() == "LANDSAT_8_C1":
             platform_name = "Landsat-8"
 
         #     data["additionalCriteria"] = {
@@ -926,13 +946,11 @@ class L8Downloader:
 
         dataset_url = self.url_post_string.format("search")
 
-        payload = {
-            "jsonRequest": json.dumps(data)
-        }
+        payload = {"jsonRequest": json.dumps(data)}
 
         try:
             r = requests.get(dataset_url, params=payload, timeout=300)
-        
+
         except BaseException as e:
             self.logger.warning(str(e))
 
@@ -944,32 +962,52 @@ class L8Downloader:
 
             result = r.json()
 
-            if r.status_code == 200 and result['errorCode'] == None:
+            if r.status_code == 200 and result["errorCode"] == None:
                 self.update_auth_time()
                 if self.verbose:
-                    self.list_results(result['data']['results'],
-                                                ['acquisitionDate',
-                                                'spatialFootprint',
-                                                'browseUrl',
-                                                'downloadUrl',
-                                                'entityId',
-                                                'metadataUrl',
-                                                'summary',
-                                                'bulkOrdered',
-                                                'ordered'
-                                                ],
-                                                'search_for_products', write_to_csv=write_to_csv)
+                    self.list_results(
+                        result["data"]["results"],
+                        [
+                            "acquisitionDate",
+                            "spatialFootprint",
+                            "browseUrl",
+                            "downloadUrl",
+                            "entityId",
+                            "metadataUrl",
+                            "summary",
+                            "bulkOrdered",
+                            "ordered",
+                        ],
+                        "search_for_products",
+                        write_to_csv=write_to_csv,
+                    )
 
-                result_list = self.populate_result_list(result, platform_name, dataset_name, detailed=detailed, realtime=realtime)
+                result_list = self.populate_result_list(
+                    result,
+                    platform_name,
+                    dataset_name,
+                    detailed=detailed,
+                    realtime=realtime,
+                )
 
                 if just_entity_ids:
-                    return [r['entity_id'] for r in result_list]
+                    return [r["entity_id"] for r in result_list]
                 else:
                     return result_list
             else:
-                self.logger.warning(f"There was a problem getting products, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}")
+                self.logger.warning(
+                    f"There was a problem getting products, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}"
+                )
 
-    def search_for_products_by_tile(self, dataset_name, tile_list, query_dict, just_entity_ids=False, write_to_csv=False, detailed=False):
+    def search_for_products_by_tile(
+        self,
+        dataset_name,
+        tile_list,
+        query_dict,
+        just_entity_ids=False,
+        write_to_csv=False,
+        detailed=False,
+    ):
         """
         Same as search_for_products, but using a direct tile list
 
@@ -978,7 +1016,9 @@ class L8Downloader:
 
         # Sentinel2 fieldId for tile number (TXXXXX)
         # 18701
-        self.logger.warning('This function (search_for_products_by_tile) is disabled until USGS restores metadata based query filtering (August 10, 2020)')
+        self.logger.warning(
+            "This function (search_for_products_by_tile) is disabled until USGS restores metadata based query filtering (August 10, 2020)"
+        )
         # self.check_auth()
         # platform_name = "Unknown"
 
@@ -1022,7 +1062,7 @@ class L8Downloader:
 
         #         child_filter_list.append(filter_pathrow)
 
-        #     # {'fieldId': 20510, 'name': 'Collection Category', 'fieldLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#collection_category', 'valueList': [{'value': None, 'name': 'All'}, {'value': 'T1', 'name': 'Tier 1'}, {'value': 'T2', 'name': 'Tier 2'}, {'value': 'RT', 'name': 'Real-Time'}]}, 
+        #     # {'fieldId': 20510, 'name': 'Collection Category', 'fieldLink': 'https://lta.cr.usgs.gov/DD/landsat_dictionary.html#collection_category', 'valueList': [{'value': None, 'name': 'All'}, {'value': 'T1', 'name': 'Tier 1'}, {'value': 'T2', 'name': 'Tier 2'}, {'value': 'RT', 'name': 'Real-Time'}]},
         #     data["additionalCriteria"] = {
         #         "filterType": "and",
         #         "childFilters": [
@@ -1032,7 +1072,7 @@ class L8Downloader:
         #             }
         #         ]
         #     }
-            
+
         #     if 'collection_category' in query_dict.keys():
         #         collection_filter = {
         #             "filterType": "or",
@@ -1048,7 +1088,7 @@ class L8Downloader:
         #             }
 
         #             collection_filter['childFilters'].append(value_filter)
-                
+
         #         data["additionalCriteria"]["childFilters"].append(collection_filter)
 
         #     # TODO: Fix this later
@@ -1130,14 +1170,15 @@ class L8Downloader:
         #     else:
         #         self.logger.warning(f"There was a problem getting products, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}")
 
-
-    def search_for_products_polygon_to_tiles(self,
-                                             dataset_name: str,
-                                             polygon: str,
-                                             query_dict: Dict,
-                                             detailed: bool = False,
-                                             just_entity_ids: bool = False,
-                                             write_to_csv: bool = False) -> Tuple[List[Dict], Optional[Dict]]:
+    def search_for_products_polygon_to_tiles(
+        self,
+        dataset_name: str,
+        polygon: str,
+        query_dict: Dict,
+        detailed: bool = False,
+        just_entity_ids: bool = False,
+        write_to_csv: bool = False,
+    ) -> Tuple[List[Dict], Optional[Dict]]:
         """Same as search_for_products, with polygon derived tiles instead.
 
         See search_for_products for example on a USGS EE query formation.
@@ -1181,14 +1222,13 @@ class L8Downloader:
         # 18701
 
         self.check_auth()
-        
+
         platform_name = "Unknown"
 
         # 1. parse polygon into a list of MGRS gzd or WRS2 pathrow
         gzd_list = utilities.find_mgrs_intersection_large(polygon)
 
-        gzd_list_100km = utilities.find_mgrs_intersection_100km(polygon,
-                                                                gzd_list)
+        gzd_list_100km = utilities.find_mgrs_intersection_100km(polygon, gzd_list)
 
         poly = ogr.CreateGeometryFromWkt(polygon)
         env = poly.GetEnvelope()
@@ -1199,29 +1239,23 @@ class L8Downloader:
         upperrightX = env[1]
         upperrightY = env[3]
 
-        data =  {
+        data = {
             "datasetName": dataset_name,
-            "apiKey": self.auth_token['token'],
+            "apiKey": self.auth_token["token"],
             "temporalFilter": {
-                        "startDate": query_dict['date_start'].strftime("%Y-%m-%d"),
-                        "endDate": query_dict['date_end'].strftime("%Y-%m-%d")
+                "startDate": query_dict["date_start"].strftime("%Y-%m-%d"),
+                "endDate": query_dict["date_end"].strftime("%Y-%m-%d"),
             },
             "spatialFilter": {
                 "filterType": "mbr",
-                    "lowerLeft": {
-                "latitude": lowerleftY,
-                "longitude": lowerleftX
-                    },
-                    "upperRight": {
-                "latitude": upperrightY,
-                "longitude": upperrightX
-                    }
+                "lowerLeft": {"latitude": lowerleftY, "longitude": lowerleftX},
+                "upperRight": {"latitude": upperrightY, "longitude": upperrightX},
             },
             "maxCloudCover": query_dict["cloud_percent"],
-            "includeUnknownCloudCover": True
+            "includeUnknownCloudCover": True,
         }
 
-        if dataset_name == 'LANDSAT_8_C1':
+        if dataset_name == "LANDSAT_8_C1":
             platform_name = "Landsat-8"
 
         dataset_url = self.url_post_string.format("search")
@@ -1233,58 +1267,64 @@ class L8Downloader:
         #     return []
 
         # data['maxResults'] = total_num
-        data['maxResults'] = 5000
+        data["maxResults"] = 5000
         # print(total_num)
-        payload = {
-            "jsonRequest": json.dumps(data)
-        }
+        payload = {"jsonRequest": json.dumps(data)}
         time.sleep(0.25)
         try:
             r = requests.get(dataset_url, params=payload, timeout=300)
-        
+
         except BaseException as e:
             self.logger.warning(str(e))
         else:
-        
+
             self.logger.debug(r)
             result = r.json()
 
-            if r.status_code == 200 and result['errorCode'] == None:
+            if r.status_code == 200 and result["errorCode"] == None:
                 self.update_auth_time()
                 if self.verbose:
-                    self.list_results(result['data']['results'],
-                                                ['acquisitionDate',
-                                                'spatialFootprint',
-                                                'browseUrl',
-                                                'downloadUrl',
-                                                'entityId',
-                                                'metadataUrl',
-                                                'summary',
-                                                'bulkOrdered',
-                                                'ordered'
-                                                ],
-                                                'search_for_products', write_to_csv=write_to_csv)
+                    self.list_results(
+                        result["data"]["results"],
+                        [
+                            "acquisitionDate",
+                            "spatialFootprint",
+                            "browseUrl",
+                            "downloadUrl",
+                            "entityId",
+                            "metadataUrl",
+                            "summary",
+                            "bulkOrdered",
+                            "ordered",
+                        ],
+                        "search_for_products",
+                        write_to_csv=write_to_csv,
+                    )
 
                 self.logger.info(f"Number of results: {len(result['data']['results'])}")
-                
+
                 # Use to save out intermediate results for testing purposes
                 # with open('raw_alberta_aug2018_results.json', 'w') as outfile:
                 #     json.dump(result, outfile)
 
-                temp_results = utilities.filter_by_footprint(polygon,
-                                                            result['data']['results'],
-                                                            dataset_name)
+                temp_results = utilities.filter_by_footprint(
+                    polygon, result["data"]["results"], dataset_name
+                )
 
-                result['data']['results'] = temp_results
+                result["data"]["results"] = temp_results
 
-                result_list = self.populate_result_list(result, platform_name, dataset_name, detailed=detailed)
+                result_list = self.populate_result_list(
+                    result, platform_name, dataset_name, detailed=detailed
+                )
 
                 if just_entity_ids:
-                    return [r['entity_id'] for r in result_list]
+                    return [r["entity_id"] for r in result_list]
                 else:
                     return result_list
             else:
-                self.logger.warning(f"There was a problem getting products, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}")
+                self.logger.warning(
+                    f"There was a problem getting products, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}"
+                )
 
     def fill_detailed_metadata(self, product_list):
         """
@@ -1293,15 +1333,17 @@ class L8Downloader:
         Uses search_scene_metadata to find the additional metadata.
         """
 
-        self.logger.info('Populating detailed metadata for each product...')
+        self.logger.info("Populating detailed metadata for each product...")
         result_list = []
         if len(product_list) > 0:
             self.logger.debug(product_list)
-            detailed_metadata_list = self.search_scene_metadata(product_list[0]['dataset_name'], [r['entity_id'] for r in product_list])
+            detailed_metadata_list = self.search_scene_metadata(
+                product_list[0]["dataset_name"], [r["entity_id"] for r in product_list]
+            )
             self.logger.debug(detailed_metadata_list)
 
             for r in product_list:
-                if r['platform_name'] == 'Landsat-8':
+                if r["platform_name"] == "Landsat-8":
                     product_dict = dict(r)
                     # start time = '2017:135:18:29:18.4577340'
                     # datetime.strptime('Jun 1 2005  1:33PM', '%Y:%j:%H:%M:%S.%f')
@@ -1309,64 +1351,124 @@ class L8Downloader:
                     # select the first one
                     # print(r)
 
+                    detailed_metadata = [
+                        md
+                        for md in detailed_metadata_list
+                        if md["entityId"] == r["entity_id"]
+                    ][0]["metadataFields"]
+                    product_dict["detailed_metadata"] = detailed_metadata
 
-                    detailed_metadata = [md for md in detailed_metadata_list if md['entityId'] == r['entity_id']][0]['metadataFields']
-                    product_dict['detailed_metadata'] = detailed_metadata
-
-                    utm_zone = [r['value'] for r in product_dict['detailed_metadata'] if r['fieldName'] == 'UTM Zone'][0]
-                    center_latitude = [r['value'] for r in product_dict['detailed_metadata'] if r['fieldName'] == 'Center Latitude'][0]
+                    utm_zone = [
+                        r["value"]
+                        for r in product_dict["detailed_metadata"]
+                        if r["fieldName"] == "UTM Zone"
+                    ][0]
+                    center_latitude = [
+                        r["value"]
+                        for r in product_dict["detailed_metadata"]
+                        if r["fieldName"] == "Center Latitude"
+                    ][0]
                     north_south = center_latitude[-1]
-                    proj_start = '326' if north_south == 'N' else '327'
-                    product_dict['epsg_code'] = proj_start + str(utm_zone)
+                    proj_start = "326" if north_south == "N" else "327"
+                    product_dict["epsg_code"] = proj_start + str(utm_zone)
 
-                    product_dict['vendor_name'] = r['name']
+                    product_dict["vendor_name"] = r["name"]
 
-                    product_dict['collection_category'] = next((field['value']
-                                                            for field in detailed_metadata
-                                                                if field['fieldName'] == 'Collection Category'), None)
+                    product_dict["collection_category"] = next(
+                        (
+                            field["value"]
+                            for field in detailed_metadata
+                            if field["fieldName"] == "Collection Category"
+                        ),
+                        None,
+                    )
 
-                    product_dict['acquisition_start'] = next((datetime.strptime(field['value'][:-2], '%Y:%j:%H:%M:%S.%f')
-                                                            for field in detailed_metadata
-                                                                if field['fieldName'] == 'Start Time'), None)
+                    product_dict["acquisition_start"] = next(
+                        (
+                            datetime.strptime(field["value"][:-2], "%Y:%j:%H:%M:%S.%f")
+                            for field in detailed_metadata
+                            if field["fieldName"] == "Start Time"
+                        ),
+                        None,
+                    )
 
-                    product_dict['acquisition_end'] = next((datetime.strptime(field['value'][:-2], '%Y:%j:%H:%M:%S.%f')
-                                                            for field in detailed_metadata
-                                                                if field['fieldName'] == 'Stop Time'), None)
+                    product_dict["acquisition_end"] = next(
+                        (
+                            datetime.strptime(field["value"][:-2], "%Y:%j:%H:%M:%S.%f")
+                            for field in detailed_metadata
+                            if field["fieldName"] == "Stop Time"
+                        ),
+                        None,
+                    )
 
-                    path = next((field['value']
-                                                            for field in detailed_metadata
-                                                                if field['fieldName'] == 'WRS Path'), None)
-                    row = next((field['value']
-                                                            for field in detailed_metadata
-                                                                if field['fieldName'] == 'WRS Row'), None)
-                    product_dict['pathrow'] = path + row
+                    path = next(
+                        (
+                            field["value"]
+                            for field in detailed_metadata
+                            if field["fieldName"] == "WRS Path"
+                        ),
+                        None,
+                    )
+                    row = next(
+                        (
+                            field["value"]
+                            for field in detailed_metadata
+                            if field["fieldName"] == "WRS Row"
+                        ),
+                        None,
+                    )
+                    product_dict["pathrow"] = path + row
 
-                    product_dict['land_cloud_percent'] = next((field['value']
-                                                            for field in detailed_metadata
-                                                                if field['fieldName'] == 'Land Cloud Cover'), None)
+                    product_dict["land_cloud_percent"] = next(
+                        (
+                            field["value"]
+                            for field in detailed_metadata
+                            if field["fieldName"] == "Land Cloud Cover"
+                        ),
+                        None,
+                    )
 
-                    product_dict['cloud_percent'] = next((field['value']
-                                                            for field in detailed_metadata
-                                                                if field['fieldName'] == 'Scene Cloud Cover'), None)
+                    product_dict["cloud_percent"] = next(
+                        (
+                            field["value"]
+                            for field in detailed_metadata
+                            if field["fieldName"] == "Scene Cloud Cover"
+                        ),
+                        None,
+                    )
 
-                    product_dict['instrument'] = next((field['value']
-                                                            for field in detailed_metadata
-                                                                if field['fieldName'] == 'Sensor Identifier'), None)
+                    product_dict["instrument"] = next(
+                        (
+                            field["value"]
+                            for field in detailed_metadata
+                            if field["fieldName"] == "Sensor Identifier"
+                        ),
+                        None,
+                    )
 
-                    product_dict['sat_name'] = 'LANDSAT8'
-
+                    product_dict["sat_name"] = "LANDSAT8"
 
                     result_list.append(product_dict)
 
-                elif r['platform_name'] == 'Sentinel-2':
-                    logging.info('Sentinel2 detailed metadata being populated')
+                elif r["platform_name"] == "Sentinel-2":
+                    logging.info("Sentinel2 detailed metadata being populated")
 
-                    product_dict = dict(r) # copy the plain product dict without detailed metadata
+                    product_dict = dict(
+                        r
+                    )  # copy the plain product dict without detailed metadata
 
-                    detailed_metadata = [md for md in detailed_metadata_list if md['entityId'] == r['entity_id']][0]['metadataFields']
-                    product_dict['detailed_metadata'] = detailed_metadata
+                    detailed_metadata = [
+                        md
+                        for md in detailed_metadata_list
+                        if md["entityId"] == r["entity_id"]
+                    ][0]["metadataFields"]
+                    product_dict["detailed_metadata"] = detailed_metadata
 
-                    product_dict['epsg_code'] = [r['value'] for r in product_dict['detailed_metadata'] if r['fieldName'] == 'EPSG Code'][0]
+                    product_dict["epsg_code"] = [
+                        r["value"]
+                        for r in product_dict["detailed_metadata"]
+                        if r["fieldName"] == "EPSG Code"
+                    ][0]
 
                     # start time = '2017:135:18:29:18.4577340'
                     # datetime.strptime('Jun 1 2005  1:33PM', '%Y:%j:%H:%M:%S.%f')
@@ -1374,45 +1476,72 @@ class L8Downloader:
                     # select the first one
                     # Acquisition Start Date', 'descriptionLink': 'https://lta.cr.usgs.gov/Sentinel2#acqu
                     # isition_date_start', 'value': '2018-05-02T18:40:47.049Z'},
-                    product_dict['acquisition_start'] = next((datetime.strptime(field['value'][:-2], '%Y-%m-%dT%H:%M:%S.%f')
-                                                            for field in detailed_metadata
-                                                                if field['fieldName'] == 'Acquisition Start Date'), None)
+                    product_dict["acquisition_start"] = next(
+                        (
+                            datetime.strptime(
+                                field["value"][:-2], "%Y-%m-%dT%H:%M:%S.%f"
+                            )
+                            for field in detailed_metadata
+                            if field["fieldName"] == "Acquisition Start Date"
+                        ),
+                        None,
+                    )
 
-                    product_dict['acquisition_end'] = next((datetime.strptime(field['value'][:-2], '%Y-%m-%dT%H:%M:%S.%f')
-                                                            for field in detailed_metadata
-                                                                if field['fieldName'] == 'Acquisition End Date'), None)
+                    product_dict["acquisition_end"] = next(
+                        (
+                            datetime.strptime(
+                                field["value"][:-2], "%Y-%m-%dT%H:%M:%S.%f"
+                            )
+                            for field in detailed_metadata
+                            if field["fieldName"] == "Acquisition End Date"
+                        ),
+                        None,
+                    )
 
-                    product_dict['cloud_percent'] = next((field['value']
-                                                            for field in detailed_metadata
-                                                                if field['fieldName'] == 'Cloud Cover'), None)
+                    product_dict["cloud_percent"] = next(
+                        (
+                            field["value"]
+                            for field in detailed_metadata
+                            if field["fieldName"] == "Cloud Cover"
+                        ),
+                        None,
+                    )
 
                     # TODO: Create a converter that converts PATH/ROW to MGRS and vice Versa
-                    product_dict['mgrs'] = next((field['value']
-                                                            for field in detailed_metadata
-                                                                if field['fieldName'] == 'Tile Number'), None)
-                    product_dict['api_source'] = 'usgs_ee'
+                    product_dict["mgrs"] = next(
+                        (
+                            field["value"]
+                            for field in detailed_metadata
+                            if field["fieldName"] == "Tile Number"
+                        ),
+                        None,
+                    )
+                    product_dict["api_source"] = "usgs_ee"
 
-                    product_dict['sat_name'] = 'Sentinel2'
+                    product_dict["sat_name"] = "Sentinel2"
 
                     # Have to a bunch of conversions here becuase the usgs product vendor id does not match the MGRS
                     # of the other properties
-                    summary_string = product_dict['summary'].split(',')[0][11:]
+                    summary_string = product_dict["summary"].split(",")[0][11:]
 
-                    if summary_string[:7] == 'S2A_OPER':
-                        for r in product_dict['detailed_metadata']:
-                            if r['fieldName'] == 'Vendor Product ID':
-                                r['value'] = summary_string
+                    if summary_string[:7] == "S2A_OPER":
+                        for r in product_dict["detailed_metadata"]:
+                            if r["fieldName"] == "Vendor Product ID":
+                                r["value"] = summary_string
                     else:
-                        vendor_name = [r['value'] for r in product_dict['detailed_metadata'] if r['fieldName'] == 'Vendor Product ID'][0]
-                        temp_arr = vendor_name.split('_')
-                        temp_arr[5] = product_dict['mgrs']
-                        correct_product_name = '_'.join(temp_arr)
+                        vendor_name = [
+                            r["value"]
+                            for r in product_dict["detailed_metadata"]
+                            if r["fieldName"] == "Vendor Product ID"
+                        ][0]
+                        temp_arr = vendor_name.split("_")
+                        temp_arr[5] = product_dict["mgrs"]
+                        correct_product_name = "_".join(temp_arr)
 
-                    product_dict['vendor_name'] = correct_product_name
+                    product_dict["vendor_name"] = correct_product_name
                     result_list.append(product_dict)
 
         return result_list
-
 
     def search_scene_metadata(self, dataset_name, entity_id_list, write_to_csv=False):
         """
@@ -1429,17 +1558,15 @@ class L8Downloader:
 
         # self.logger.debug('trying to search for metadata fields in the {} dataset'.format(dataset_name))
 
-        data =  {
+        data = {
             "datasetName": dataset_name,
-            "apiKey": self.auth_token['token'],
-            "entityIds": entity_id_list
+            "apiKey": self.auth_token["token"],
+            "entityIds": entity_id_list,
         }
 
         dataset_url = self.url_post_string.format("metadata")
 
-        payload = {
-            "jsonRequest": json.dumps(data)
-        }
+        payload = {"jsonRequest": json.dumps(data)}
 
         try:
             r = requests.get(dataset_url, params=payload, timeout=300)
@@ -1451,17 +1578,23 @@ class L8Downloader:
             if r.status_code == 200:
                 self.update_auth_time()
 
-                if result['errorCode'] == None:
+                if result["errorCode"] == None:
                     if self.verbose:
-                        self.list_results(result['data'], result['data'][0].keys(),
-                                                    'search_scene_metadata', write_to_csv=write_to_csv)
+                        self.list_results(
+                            result["data"],
+                            result["data"][0].keys(),
+                            "search_scene_metadata",
+                            write_to_csv=write_to_csv,
+                        )
 
-                    for r in result['data']:
+                    for r in result["data"]:
                         metadata_list.append(r)
 
                     return metadata_list
             else:
-                self.logger.warning(f"There was a problem getting datasets, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}")
+                self.logger.warning(
+                    f"There was a problem getting datasets, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}"
+                )
 
     def search_download_options(self, dataset_name, entity_id_list, write_to_csv=False):
         """
@@ -1477,17 +1610,15 @@ class L8Downloader:
 
         # self.logger.debug('trying to search for fields in the {} dataset'.format(dataset_name))
 
-        data =  {
+        data = {
             "datasetName": dataset_name,
-            "apiKey": self.auth_token['token'],
-            "entityIds": entity_id_list
+            "apiKey": self.auth_token["token"],
+            "entityIds": entity_id_list,
         }
 
         dataset_url = self.url_post_string.format("downloadoptions")
 
-        payload = {
-            "jsonRequest": json.dumps(data)
-        }
+        payload = {"jsonRequest": json.dumps(data)}
 
         try:
             r = requests.get(dataset_url, params=payload, timeout=300)
@@ -1496,26 +1627,32 @@ class L8Downloader:
         else:
             result = r.json()
 
-            if r.status_code == 200 and result['errorCode'] == None:
+            if r.status_code == 200 and result["errorCode"] == None:
                 self.update_auth_time()
                 if self.verbose:
-                    self.list_results(result['data'],
-                                    ['downloadOptions', 'entityId'],
-                                    'search_dataset_fields',
-                                    write_to_csv=write_to_csv)
+                    self.list_results(
+                        result["data"],
+                        ["downloadOptions", "entityId"],
+                        "search_dataset_fields",
+                        write_to_csv=write_to_csv,
+                    )
 
                 product_set = set()
 
-                for product in result['data']:
-                    for download_product in product['downloadOptions']:
-                        product_set.add(download_product['downloadCode'])
+                for product in result["data"]:
+                    for download_product in product["downloadOptions"]:
+                        product_set.add(download_product["downloadCode"])
 
                 return list(product_set)
 
             else:
-                self.logger.warning(f"There was a problem getting datasets, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}")
+                self.logger.warning(
+                    f"There was a problem getting datasets, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}"
+                )
 
-    def get_download_urls(self, dataset_name, entity_id_list, product_list, auth_token=None):
+    def get_download_urls(
+        self, dataset_name, entity_id_list, product_list, auth_token=None
+    ):
         """
         /download
         {
@@ -1528,26 +1665,24 @@ class L8Downloader:
 
         if auth_token:
             token = auth_token
-            self.logger.debug('external auth token (multiprocessing)')
+            self.logger.debug("external auth token (multiprocessing)")
         else:
-            self.logger.debug('internal auth token (single process)')
+            self.logger.debug("internal auth token (single process)")
             self.check_auth()
             token = self.auth_token
 
         # self.logger.debug('trying to search for fields in the {} dataset'.format(dataset_name))
 
-        data =  {
+        data = {
             "datasetName": dataset_name,
-            "apiKey": token['token'],
+            "apiKey": token["token"],
             "entityIds": entity_id_list,
-            "products": product_list
+            "products": product_list,
         }
 
         dataset_url = self.url_post_string.format("download")
 
-        payload = {
-            "jsonRequest": json.dumps(data)
-        }
+        payload = {"jsonRequest": json.dumps(data)}
         try:
             r = requests.get(dataset_url, params=payload, timeout=300)
         except BaseException as e:
@@ -1555,44 +1690,57 @@ class L8Downloader:
         else:
             result = r.json()
 
-            if r.status_code == 200 and result['errorCode'] == None:
+            if r.status_code == 200 and result["errorCode"] == None:
                 if not auth_token:
                     self.update_auth_time()
 
                 if self.verbose:
-                    self.list_results(result['data'], [
-                                                    'entityId',
-                                                    'product',
-                                                    'url'
-                                                    ],
-                                                    'get_download_urls', write_to_csv=True)
+                    self.list_results(
+                        result["data"],
+                        ["entityId", "product", "url"],
+                        "get_download_urls",
+                        write_to_csv=True,
+                    )
 
-                return [{'url': r['url'], 'entity_id': r['entityId'], 'product': r['product']} for r in result['data']]
+                return [
+                    {
+                        "url": r["url"],
+                        "entity_id": r["entityId"],
+                        "product": r["product"],
+                    }
+                    for r in result["data"]
+                ]
 
             else:
-                self.logger.warning(f"There was a problem getting download urls, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}")
+                self.logger.warning(
+                    f"There was a problem getting download urls, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}"
+                )
 
     def download_file(self, filename, url, callback=None):
         # NOTE the stream=True parameter
 
         # self.check_auth() Since auth is baked into the url passed back from get
         # download url, the auth check is unnecessary
-        self.logger.info('Trying to download the file...')
-
-        full_file_path = filename
-
-        self.logger.info(f"Url created: {url}")
-        self.logger.info(f"Full file path: {full_file_path}")
-
+        self.logger.info("Trying to download the file...")
         try:
             r = requests.get(url, stream=True, timeout=2 * 60)
-        
+
         except BaseException as e:
             self.logger.warning(str(e))
-            return TaskStatus(False, 'An exception occured while trying to download.', e)
+            return TaskStatus(
+                False, "An exception occured while trying to download.", e
+            )
         else:
 
             self.logger.debug(f"Response status code: {r.status_code}")
+            full_file_path = (
+                filename
+                if filename
+                else r.headers["Content-Disposition"].split("filename=")[1].strip('"')
+            )
+
+            self.logger.info(f"Url created: {url}")
+            self.logger.info(f"Full file path: {full_file_path}")
 
             file_size = int(r.headers["Content-Length"])
             transfer_progress = 0
@@ -1619,9 +1767,13 @@ class L8Downloader:
                                 transfer_percent - previous_update
                             ) > update_throttle_threshold:
                                 if callback:
-                                    self.logger.debug('Calling task update state callback')
-                                    callback(transfer_progress, file_size, transfer_percent)
-                                
+                                    self.logger.debug(
+                                        "Calling task update state callback"
+                                    )
+                                    callback(
+                                        transfer_progress, file_size, transfer_percent
+                                    )
+
                                 previous_update = transfer_percent
 
                 except BaseException as e:
@@ -1651,16 +1803,11 @@ class L8Downloader:
 
         # self.logger.debug('trying to search for fields in the {} dataset'.format(dataset_name))
 
-        data =  {
-            "datasetName": dataset_name,
-            "apiKey": self.auth_token['token']
-        }
+        data = {"datasetName": dataset_name, "apiKey": self.auth_token["token"]}
 
         dataset_url = self.url_post_string.format("datasetfields")
 
-        payload = {
-            "jsonRequest": json.dumps(data)
-        }
+        payload = {"jsonRequest": json.dumps(data)}
         try:
             r = requests.get(dataset_url, params=payload, timeout=300)
         except BaseException as e:
@@ -1669,26 +1816,28 @@ class L8Downloader:
         else:
             result = r.json()
 
-            if r.status_code == 200 and result['errorCode'] == None:
+            if r.status_code == 200 and result["errorCode"] == None:
                 self.update_auth_time()
                 if self.verbose:
-                    self.list_results(result['data'],
-                                    ['fieldId',
-                                    'name',
-                                    'fieldLink',
-                                    'valueList'],
-                                    'search_dataset_fields', write_to_csv=True)
+                    self.list_results(
+                        result["data"],
+                        ["fieldId", "name", "fieldLink", "valueList"],
+                        "search_dataset_fields",
+                        write_to_csv=True,
+                    )
                 return result
             else:
-                self.logger.warning(f"There was a problem getting datasets, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}")
+                self.logger.warning(
+                    f"There was a problem getting datasets, status_code: {r.status_code}, errorCode: {result['errorCode']}, error: {result['error']}"
+                )
 
-    def download_products(self, product_list, product_type, date_string, auth_token=None):
-        """ Iterates over list of products, starts download_task for each
+    def download_products(
+        self, product_list, product_type, date_string, auth_token=None
+    ):
+        """Iterates over list of products, starts download_task for each"""
 
-        """
-
-        self.logger.info('Starting download tasks... this may take a while!')
-        path = os.path.join(date_string + 'jobstatus.json')
+        self.logger.info("Starting download tasks... this may take a while!")
+        path = os.path.join(date_string + "jobstatus.json")
 
         # Create a pool of 2 workers, iterate over the list of products and
         # start the tasks as workers become available
@@ -1702,14 +1851,12 @@ class L8Downloader:
             # the job status list
             for index, product in enumerate(product_list):
 
-                self.logger.info('Starting a task...')
-                async_started = pool.apply_async(self.download_product,
-                                                (product,
-                                                product_type),
-                                                    {
-                                                        "auth_token": auth_token
-                                                    }
-                                                )
+                self.logger.info("Starting a task...")
+                async_started = pool.apply_async(
+                    self.download_product,
+                    (product, product_type),
+                    {"auth_token": auth_token},
+                )
 
                 # self.logger.debug('Starting task {}'.format(index))
                 async_processes.append(async_started)
@@ -1730,7 +1877,7 @@ class L8Downloader:
 
                 try:
                     # self.logger.debug('Trying to fetch result of task...')
-                    result = p.get(timeout=60*60)
+                    result = p.get(timeout=60 * 60)
                 except Exception as e:
                     self.logger.debug(e)
                     # self.logger.debug('Something went wrong')
@@ -1738,7 +1885,6 @@ class L8Downloader:
                 else:
                     # self.logger.debug('Task was successful')
                     result_list.append(result)
-
 
             # self.logger.debug('Trying to close the pool and join the tasks...')
             pool.close()
@@ -1750,50 +1896,62 @@ class L8Downloader:
             # status of succdownload_productess, so you don't try to convert bad data
 
             # self.logger.debug('Writing final job status...')
-            tqdm.tqdm.write('All tasks completed!')
+            tqdm.tqdm.write("All tasks completed!")
 
-    def download_product(self, product_dict, product_type, directory=None, id=0, auth_token=None, callback=None):
+    def download_product(
+        self,
+        product_dict,
+        product_type,
+        directory=None,
+        id=0,
+        auth_token=None,
+        callback=None,
+    ):
         """
-            Get the download url for a given entity_id and product type
+        Get the download url for a given entity_id and product type
 
-            Once the url is returned, download the file so that it is dequeued on the usgs servers
+        Once the url is returned, download the file so that it is dequeued on the usgs servers
 
-            the download url is temporary and should be downloaded immediately
+        the download url is temporary and should be downloaded immediately
 
         """
         self.check_auth()
 
-        self.logger.info('Downloading single product with L8Downloader')
-        file_name = ''
+        self.logger.info("Downloading single product with L8Downloader")
+        file_name = ""
 
-        if product_dict['platform_name'] == 'Landsat-8':
-            if product_type in ['FR_BUND']:
-                file_name = product_dict['name'] + '_{}.zip'.format(product_type)
-            elif product_type in [ 'FR_THERM', 'FR_QB', 'FR_REFL']:
-                file_name = product_dict['name'] + '_{}.jpg'.format(product_type)
-            elif product_type in ['STANDARD']:
-                file_name = product_dict['name'] + '.tar.gz'
+        if product_dict["platform_name"] == "Landsat-8":
+            if product_type in ["FR_BUND"]:
+                file_name = product_dict["name"] + "_{}.zip".format(product_type)
+            elif product_type in ["FR_THERM", "FR_QB", "FR_REFL"]:
+                file_name = product_dict["name"] + "_{}.jpg".format(product_type)
+            elif product_type in ["STANDARD"]:
+                file_name = product_dict["name"] + ".tar.gz"
 
-        elif product_dict['platform_name'] == 'Sentinel-2':
+        elif product_dict["platform_name"] == "Sentinel-2":
 
-            if product_type in ['STANDARD']:
-                file_name = product_dict['name'] + '.zip'
-            elif product_type in ['FRB']:
-                file_name = product_dict['name'] + '_{}.jpg'.format(product_type)
+            if product_type in ["STANDARD"]:
+                file_name = product_dict["name"] + ".zip"
+            elif product_type in ["FRB"]:
+                file_name = product_dict["name"] + "_{}.jpg".format(product_type)
 
         if directory:
             file_name = os.path.join(directory, file_name)
 
         if not os.path.isfile(file_name):
-            download_url = self.get_download_urls(product_dict['dataset_name'],
-                                                 [product_dict['entity_id']],
-                                                 [product_type],
-                                                 auth_token=auth_token)
+            download_url = self.get_download_urls(
+                product_dict["dataset_name"],
+                [product_dict["entity_id"]],
+                [product_type],
+                auth_token=auth_token,
+            )
 
             if download_url:
-                self.logger.info('Found download url okay, downloading file...')
+                self.logger.info("Found download url okay, downloading file...")
                 # download_file returns a TaskStatus named tuple
-                result = self.download_file(file_name, download_url[0]['url'], callback=callback)
+                result = self.download_file(
+                    file_name, download_url[0]["url"], callback=callback
+                )
                 return result
                 # if result.status and os.path.isfile(file_name):
                 #     return result
@@ -1801,16 +1959,14 @@ class L8Downloader:
                 #     return TaskStatus(False, 'The download file cannot be found', None)
             else:
                 # Return a TaskStatus named tuple
-                #return (False, 'Download URL could not be determined', None)
-                return TaskStatus(False, 'Download URL could not be determined', None)
+                # return (False, 'Download URL could not be determined', None)
+                return TaskStatus(False, "Download URL could not be determined", None)
         else:
             # Return a TaskStatus named tuple
-            #return (True, 'File already exists.', file_name)
-            return TaskStatus(True, 'Product to be downloaded already exists.', file_name)
-
-
-
-
+            # return (True, 'File already exists.', file_name)
+            return TaskStatus(
+                True, "Product to be downloaded already exists.", file_name
+            )
 
     # ---------------------------------------------------------------------------
     # -- Bulk Downloader API functions ------------------------------------------
@@ -1834,23 +1990,24 @@ class L8Downloader:
         username = self.username
         password = self.password
 
-        inputs = [prod['name'] for prod in product_list]
+        inputs = [prod["name"] for prod in product_list]
 
-        date_note = datetime.now().strftime('%Y%m%d-%H:%M-ACGEO-{}'.format(str(len(inputs))))
+        date_note = datetime.now().strftime(
+            "%Y%m%d-%H:%M-ACGEO-{}".format(str(len(inputs)))
+        )
 
         datapayload = {
             "format": "GTIFF",
             "note": date_note,
-            "olitirs8_collection": {
-                "inputs": inputs,
-                "products": [
-                    "sr"
-                ]
-            }
+            "olitirs8_collection": {"inputs": inputs, "products": ["sr"]},
         }
 
         try:
-            r = requests.post(url='https://espa.cr.usgs.gov/api/v1/order', json=datapayload, auth=(username, password))
+            r = requests.post(
+                url="https://espa.cr.usgs.gov/api/v1/order",
+                json=datapayload,
+                auth=(username, password),
+            )
         except BaseException as e:
             self.logger.warning(str(e))
         else:
@@ -1859,19 +2016,19 @@ class L8Downloader:
             self.logger.debug(r.status_code)
 
             if r.status_code in [200, 201]:
-                return response['orderid']
+                return response["orderid"]
             else:
                 return False
 
     def batch_submit_order(self, product_list, batch_size=10):
-        """ Break up the bulk order so that results are received quicker.
-
-        """
+        """Break up the bulk order so that results are received quicker."""
         batch_list = []
 
         # Parse the entire list into a series of slices the size of the batch
         for idx in range(0, (len(product_list) // 10) + 1):
-            batch_list.append(product_list[idx * batch_size : (idx * batch_size) + batch_size ])
+            batch_list.append(
+                product_list[idx * batch_size : (idx * batch_size) + batch_size]
+            )
 
         self.logger.debug(len(product_list))
 
@@ -1886,14 +2043,18 @@ class L8Downloader:
         return result
 
     def check_current_orders(self):
-        """ See if there are outstanding orders that the user should download
-            Useful to do before the user starts another order
+        """See if there are outstanding orders that the user should download
+        Useful to do before the user starts another order
         """
         username = self.username
         password = self.password
 
         try:
-            r = requests.get(url='https://espa.cr.usgs.gov/api/v1/list-orders', auth=(username, password), timeout=60*2)
+            r = requests.get(
+                url="https://espa.cr.usgs.gov/api/v1/list-orders",
+                auth=(username, password),
+                timeout=60 * 2,
+            )
         except BaseException as e:
             self.logger.warning(str(e))
             return False
@@ -1907,22 +2068,30 @@ class L8Downloader:
                         self.logger.info(order_id)
                         order_dict = self.get_order_entity_ids(order_id)
                         if order_dict:
-                            if order_dict['status'] in ['ordered', 'completed']:
-                                self.logger.info(f"ORDER ID: {order_id}, Info: {order_dict}")
+                            if order_dict["status"] in ["ordered", "completed"]:
+                                self.logger.info(
+                                    f"ORDER ID: {order_id}, Info: {order_dict}"
+                                )
                                 products_list.append(order_dict)
                         else:
                             self.logger.info("unable to find order info")
 
                     return products_list
             else:
-                self.logger.warning(f'There was a problem connecting to the USGS API, please try again later. ({r.status_code})')
+                self.logger.warning(
+                    f"There was a problem connecting to the USGS API, please try again later. ({r.status_code})"
+                )
                 return False
 
     def check_order_status(self, order_id):
         username = self.username
         password = self.password
         try:
-            r = requests.get(url='https://espa.cr.usgs.gov/api/v1/order-status/{}'.format(order_id), auth=(username, password), timeout=60*5)
+            r = requests.get(
+                url="https://espa.cr.usgs.gov/api/v1/order-status/{}".format(order_id),
+                auth=(username, password),
+                timeout=60 * 5,
+            )
         except BaseException as e:
             self.logger.warning(str(e))
             return None
@@ -1931,16 +2100,17 @@ class L8Downloader:
             self.logger.debug(r.text)
             self.logger.debug(r.status_code)
 
-            
             if r.status_code == 200:
                 try:
                     data = r.json()
                 except BaseException as e:
-                    self.logger.error('Something went wrong trying to decode the JSON from the API response.')
+                    self.logger.error(
+                        "Something went wrong trying to decode the JSON from the API response."
+                    )
                     self.logger.error(str(e))
                     return None
                 else:
-                    if data['status'] == 'complete':
+                    if data["status"] == "complete":
                         return True
                     else:
                         return False
@@ -1950,12 +2120,14 @@ class L8Downloader:
             else:
                 return False
 
-
     def get_order_entity_ids(self, order_id):
         username = self.username
         password = self.password
         try:
-            r = requests.get(url='https://espa.cr.usgs.gov/api/v1/order/{}'.format(order_id), auth=(username, password))
+            r = requests.get(
+                url="https://espa.cr.usgs.gov/api/v1/order/{}".format(order_id),
+                auth=(username, password),
+            )
         except BaseException as e:
             self.logger.warning(str(e))
         else:
@@ -1963,11 +2135,13 @@ class L8Downloader:
 
             if r.status_code in [200, 201]:
                 order_dict = {
-                    "status" :response["status"],
-                    "inputs_list": response["product_opts"]["olitirs8_collection"]["inputs"],
+                    "status": response["status"],
+                    "inputs_list": response["product_opts"]["olitirs8_collection"][
+                        "inputs"
+                    ],
                     "order_date": response["order_date"],
                     "note": response["note"],
-                    "order_id": order_id
+                    "order_id": order_id,
                 }
 
                 return order_dict
@@ -1978,14 +2152,14 @@ class L8Downloader:
         username = self.username
         password = self.password
 
-
-        data_payload = {
-            "orderid": order_id,
-            "status": "cancelled"
-        }
+        data_payload = {"orderid": order_id, "status": "cancelled"}
 
         try:
-            r = requests.put(url='https://espa.cr.usgs.gov/api/v1/order', json=data_payload, auth=(username, password))
+            r = requests.put(
+                url="https://espa.cr.usgs.gov/api/v1/order",
+                json=data_payload,
+                auth=(username, password),
+            )
         except BaseException as e:
             self.logger.warning(str(e))
         else:
@@ -2000,13 +2174,15 @@ class L8Downloader:
             else:
                 return False
 
-
     def download_order(self, order_id, directory=None, verify=False, callback=None):
         username = self.username
         password = self.password
 
         try:
-            order_response = requests.get(url='https://espa.cr.usgs.gov/api/v1/item-status/{}'.format(order_id), auth=(username, password))
+            order_response = requests.get(
+                url="https://espa.cr.usgs.gov/api/v1/item-status/{}".format(order_id),
+                auth=(username, password),
+            )
         except BaseException as e:
             self.logger.warning(str(e))
         else:
@@ -2019,61 +2195,76 @@ class L8Downloader:
 
                 for item in item_list:
                     self.logger.info(item)
-                    download_url = item['product_dload_url']
+                    download_url = item["product_dload_url"]
 
-                    r = requests.get(download_url, stream=True, timeout=60*60)
+                    r = requests.get(download_url, stream=True, timeout=60 * 60)
 
                     if directory:
-                        file_name = os.path.split(item['product_dload_url'])[1]
+                        file_name = os.path.split(item["product_dload_url"])[1]
                         final_list.append(file_name)
                         file_path = os.path.join(directory, file_name)
                     else:
-                        file_name = os.path.split(item['product_dload_url'])[1]
+                        file_name = os.path.split(item["product_dload_url"])[1]
                         final_list.append(file_name)
                         file_path = file_name
 
                     success = False
-                    
+
                     if not os.path.isfile(file_path):
-                        self.logger.info(f'Trying to download {file_path}')
+                        self.logger.info(f"Trying to download {file_path}")
                         attempts = 0
-                        
+
                         file_size = int(r.headers["Content-Length"])
                         transfer_progress = 0
                         chunk_size = 1024 * 1024
 
                         previous_update = 0
                         update_throttle_threshold = 1  # Update every percent change
-                        
+
                         while not success and attempts < self.max_attempts:
                             bytes_since_last_update = 0
                             try:
                                 attempts += 1
-                                with open(file_path, 'wb') as f:
+                                with open(file_path, "wb") as f:
                                     for chunk in r.iter_content(chunk_size=chunk_size):
-                                        if chunk: # filter out keep-alive new chunks
+                                        if chunk:  # filter out keep-alive new chunks
                                             f.write(chunk)
                                             transfer_progress += chunk_size
                                             bytes_since_last_update += chunk_size
                                             transfer_percent = round(
-                                                min(100, (transfer_progress / file_size) * 100), 2
+                                                min(
+                                                    100,
+                                                    (transfer_progress / file_size)
+                                                    * 100,
+                                                ),
+                                                2,
                                             )
                                             self.logger.debug(
                                                 f"Progress: {transfer_progress},  {transfer_percent:.2f}%"
                                             )
 
-                                            self.logger.debug(str(transfer_percent - previous_update))
+                                            self.logger.debug(
+                                                str(transfer_percent - previous_update)
+                                            )
                                             if (
                                                 transfer_percent - previous_update
                                             ) > update_throttle_threshold:
                                                 if callback:
-                                                    self.logger.debug('Calling task update state callback')
-                                                    callback(item["name"], file_size, bytes_since_last_update)
+                                                    self.logger.debug(
+                                                        "Calling task update state callback"
+                                                    )
+                                                    callback(
+                                                        item["name"],
+                                                        file_size,
+                                                        bytes_since_last_update,
+                                                    )
                                                     bytes_since_last_update = 0
-                                                
+
                                                 previous_update = transfer_percent
                             except Exception as e:
-                                self.logger.warning(f'Error occured, usgs is not cooperating {str(e)}')
+                                self.logger.warning(
+                                    f"Error occured, usgs is not cooperating {str(e)}"
+                                )
                                 os.remove(file_path)
                                 time.sleep(30)
                             else:
@@ -2081,14 +2272,20 @@ class L8Downloader:
                                 time.sleep(30)
 
                         if attempts == self.max_attempts:
-                            self.logger.warning(f'Max attempts at file download reached, continuing without downloading {item}')
-                            return TaskStatus(False, 'Max attempts reached. Try again later.', None)
+                            self.logger.warning(
+                                f"Max attempts at file download reached, continuing without downloading {item}"
+                            )
+                            return TaskStatus(
+                                False, "Max attempts reached. Try again later.", None
+                            )
                     else:
-                        self.logger.info('File to be downloaded already exists locally.')
+                        self.logger.info(
+                            "File to be downloaded already exists locally."
+                        )
 
-                return TaskStatus(True, 'Downloading finished', final_list)
+                return TaskStatus(True, "Downloading finished", final_list)
             else:
-                return TaskStatus(False, 'Bad return from the server', None)
+                return TaskStatus(False, "Bad return from the server", None)
 
     def check_if_products_exist(self, name_list, directory, type_of_product):
         # Create a copy of the list
@@ -2099,20 +2296,22 @@ class L8Downloader:
 
         # For each entity name, see if an equiv product already exists
         for product_name in name_list:
-            part_array = product_name.split('_')
-            match_string = '{}{}{}'.format(part_array[0],
-                                           part_array[2],
-                                           part_array[3])
+            part_array = product_name.split("_")
+            match_string = "{}{}{}".format(part_array[0], part_array[2], part_array[3])
 
-            match_string += r'\d{2}T\d-SC\d{14}\.tar\.gz'
+            match_string += r"\d{2}T\d-SC\d{14}\.tar\.gz"
 
-            for file_name in os.listdir(os.path.join('.', directory)):
+            for file_name in os.listdir(os.path.join(".", directory)):
                 # Use a regex to match the converted product name
                 # If it is found, remove it from the list (if it isn't already)
                 if re.match(match_string, file_name):
-                    self.logger.info('This product already exists in the download folder.')
+                    self.logger.info(
+                        "This product already exists in the download folder."
+                    )
                     if product_name in not_exist_set:
-                        self.logger.info(f'Removing {product_name} from products to order.')
+                        self.logger.info(
+                            f"Removing {product_name} from products to order."
+                        )
                         not_exist_set.remove(product_name)
 
         return not_exist_set

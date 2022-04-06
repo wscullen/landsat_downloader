@@ -6,6 +6,7 @@ import os
 import json
 from landsat_downloader.test.timeit_dec import timeit
 from landsat_downloader.utils import ConfigValueMissing, ConfigFileProblem
+import time
 
 TEST_DIR = Path(__file__).absolute().parent
 
@@ -39,7 +40,7 @@ class TestL8Downloader(unittest.TestCase):
 
         downloader = l8_downloader_v2.L8Downloader(self.config_path)
 
-        dataset_results = downloader.dataset_search("LANDSAT_8_C1")
+        dataset_results = downloader.dataset_search("LANDSAT")
 
         print(dataset_results)
 
@@ -55,6 +56,87 @@ class TestL8Downloader(unittest.TestCase):
         )
 
         print(scene_results)
+
+    def test_download_options(self):
+        downloader = l8_downloader_v2.L8Downloader(self.config_path)
+
+        download_options = downloader.download_options(
+            "LC90380262022081LGN00", "landsat_ot_c2_l2"
+        )
+
+        print(download_options)
+
+    def test_download_request(self):
+        downloader = l8_downloader_v2.L8Downloader(self.config_path)
+        download_options = downloader.download_options(
+            "LC90380262022081LGN00", "landsat_ot_c2_l2"
+        )
+
+        print(download_options)
+
+        download_requests = []
+        for option in download_options[0]["secondaryDownloads"]:
+            if option["available"]:
+                download_requests.append(
+                    {
+                        "entityId": option["entityId"],
+                        "productId": option["id"],
+                    }
+                )
+
+        download_results = downloader.download_request(
+            download_requests,
+            "test_download_request",
+        )
+
+        print(download_results)
+        if len(download_results["availableDownloads"]) > 0:
+            # download_results = downloader.download_request(
+            #     download_results["availableDownloads"],
+            #     "test_download_request",
+            # )
+
+            # print(download_results)
+            for download in download_results["availableDownloads"]:
+                downloader.download_file(download["url"])
+
+    def test_download_retrieve(self):
+        downloader = l8_downloader_v2.L8Downloader(self.config_path)
+        download_results = downloader.download_retrieve(
+            "LC08_L2SP_041025_20220319_20220329_02_T1"
+        )
+
+        while len(download_results["available"]) != 22:
+            download_results = downloader.download_retrieve(
+                "LC08_L2SP_041025_20220319_20220329_02_T1"
+            )
+
+            print(download_results)
+            time.sleep(60)
+
+        for download in download_results["available"]:
+            downloader.download_file(download["displayId"], download["url"])
+
+    def test_download_full_product(self):
+        downloader = l8_downloader_v2.L8Downloader(self.config_path)
+
+        product_name = "LC08_L2SP_041025_20220319_20220329_02_T1"
+        entity_id = "LC80410252022078LGN00"
+        dataset_name = "landsat_ot_c2_l2"
+        download_path = Path.cwd()
+        download_results = downloader.download_full_product(
+            product_name, entity_id, dataset_name, download_path
+        )
+
+        print(download_results)
+
+    def test_download_search(self):
+        downloader = l8_downloader_v2.L8Downloader(self.config_path)
+
+        product_name = "LC08_L2SP_039026_20220321_20220329_02_T1"
+        download_results = downloader.download_search(product_name)
+
+        print(download_results)
 
 
 if __name__ == "__main__":

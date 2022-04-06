@@ -97,7 +97,7 @@ class L8Downloader:
         logger.addHandler(ch)
 
         self.logger = logger
-        
+
         user_n = None
         pass_w = None
 
@@ -652,7 +652,6 @@ class L8Downloader:
             ]
         }
         """
-
         geojson_dict = json.loads(geojson_string)
         coordinates_list = geojson_dict["coordinates"][0]
 
@@ -663,6 +662,272 @@ class L8Downloader:
             usgs_format_dict["coordinates"].append(usgs_coord)
 
         return usgs_format_dict
+
+    def download_options(self, entity_id: str, dataset_name: str):
+        # Find the download options for these scenes
+        # NOTE :: Remember the scene list cannot exceed 50,000 items!
+        data = {"datasetName": dataset_name, "entityIds": entity_id}
+        api_key = self.login()
+
+        if api_key:
+            url = self.url_template.format("download-options")
+
+            self.logger.info(data)
+            headers = {"X-Auth-Token": api_key}
+
+            try:
+                r = requests.post(url, json=data, headers=headers)
+            except BaseException as e:
+                self.logger.error(
+                    f"There was a problem with the request. Exception: {str(e)}"
+                )
+                raise e
+            else:
+                if r.status_code == 200:
+                    result = r.json()
+                    if result["errorCode"]:
+                        self.logger.warning(
+                            f"There was a problem with the request, error: {result['errorCode']}, errorMessage: {result['errorMessage']}"
+                        )
+                    else:
+                        return result["data"]
+
+                else:
+                    self.logger.warning(
+                        f"There was a problem: status_code = {r.status_code}"
+                    )
+                    result = r.json()
+                    if result["errorCode"]:
+                        self.logger.warning(
+                            f"There was a problem with the request, error: {result['errorCode']}, errorMessage: {result['errorMessage']}"
+                        )
+        else:
+            self.logger.error("Unable to obtain API key for request.")
+
+    def download_request(self, download_requests, label):
+        payload = {
+            "downloads": download_requests,
+            "label": label,
+        }
+        api_key = self.login()
+
+        if api_key:
+            url = self.url_template.format("download-request")
+
+            self.logger.info(payload)
+            headers = {"X-Auth-Token": api_key}
+
+            try:
+                r = requests.post(url, json=payload, headers=headers)
+            except BaseException as e:
+                self.logger.error(
+                    f"There was a problem with the request. Exception: {str(e)}"
+                )
+                raise e
+            else:
+                if r.status_code == 200:
+                    result = r.json()
+                    if result["errorCode"]:
+                        self.logger.warning(
+                            f"There was a problem with the request, error: {result['errorCode']}, errorMessage: {result['errorMessage']}"
+                        )
+                    else:
+                        return result["data"]
+
+                else:
+                    self.logger.warning(
+                        f"There was a problem: status_code = {r.status_code}"
+                    )
+                    result = r.json()
+                    if result["errorCode"]:
+                        self.logger.warning(
+                            f"There was a problem with the request, error: {result['errorCode']}, errorMessage: {result['errorMessage']}"
+                        )
+        else:
+            self.logger.error("Unable to obtain API key for request.")
+
+    def download_retrieve(self, label):
+        # Find the download options for these scenes
+        # NOTE :: Remember the scene list cannot exceed 50,000 items!
+        api_key = self.login()
+
+        if api_key:
+            headers = {"X-Auth-Token": api_key}
+
+            url = self.url_template.format("download-retrieve")
+            payload = {
+                "label": label,
+            }
+            self.logger.info(payload)
+
+            request_results = requests.post(url, json=payload, headers=headers)
+            result = request_results.json()["data"]
+            self.logger.debug(result)
+
+            return result
+        else:
+            self.logger.error("Unable to obtain API key for request.")
+
+    def download_file(self, download_path, filename, url, callback=None):
+        # NOTE the stream=True parameter
+
+        # self.check_auth() Since auth is baked into the url passed back from get
+        # download url, the auth check is unnecessary
+        self.logger.info("Trying to download the file...")
+
+        try:
+            r = requests.get(url, stream=True, timeout=2 * 60)
+
+        except BaseException as e:
+            self.logger.warning(str(e))
+            return TaskStatus(
+                False, "An exception occured while trying to download.", e
+            )
+        else:
+
+            self.logger.debug(f"Response status code: {r.status_code}")
+            self.logger.debug(r.headers)
+            full_file_path = Path(
+                download_path,
+                (
+                    filename
+                    if filename
+                    else r.headers["Content-Disposition"]
+                    .split("filename=")[1]
+                    .strip('"')
+                ),
+            )
+
+            self.logger.info(f"Url created: {url}")
+            self.logger.info(f"Full file path: {full_file_path}")
+            file_size = int(r.headers["Content-Length"])
+            transfer_progress = 0
+            chunk_size = 1024 * 1024
+
+            previous_update = 0
+            update_throttle_threshold = 1  # Update every percent change
+
+            if not os.path.isfile(full_file_path):
+                try:
+                    with open(full_file_path, "wb") as f:
+                        for chunk in r.iter_content(chunk_size=chunk_size):
+                            f.write(chunk)
+                            transfer_progress += chunk_size
+                            transfer_percent = round(
+                                min(100, (transfer_progress / file_size) * 100), 2
+                            )
+                            self.logger.debug(
+                                f"Progress: {transfer_progress},  {transfer_percent:.2f}%"
+                            )
+
+                            self.logger.debug(str(transfer_percent - previous_update))
+                            if (
+                                transfer_percent - previous_update
+                            ) > update_throttle_threshold:
+                                if callback:
+                                    self.logger.debug(
+                                        "Calling task update state callback"
+                                    )
+                                    callback(
+                                        transfer_progress, file_size, transfer_percent
+                                    )
+
+                                previous_update = transfer_percent
+
+                except BaseException as e:
+                    self.logger.debug(str(e))
+                    return TaskStatus(
+                        False, "An exception occured while trying to download.", e
+                    )
+                else:
+                    return TaskStatus(True, "Download successful", str(full_file_path))
+            else:
+                return TaskStatus(
+                    True,
+                    "Requested file to download already exists.",
+                    str(full_file_path),
+                )
+
+    def download_search(self, product_name):
+
+        api_key = self.login()
+
+        if api_key:
+            headers = {"X-Auth-Token": api_key}
+
+            url = self.url_template.format("download-search")
+            payload = {
+                "label": product_name,
+            }
+            self.logger.info(payload)
+
+            request_results = requests.post(url, json=payload, headers=headers)
+            result = request_results.json()["data"]
+            self.logger.debug(result)
+
+            return result
+
+        else:
+            self.logger.error("Unable to obtain API key for request.")
+
+    def download_full_product(self, product_name, entity_id, dataset_name, working_dir):
+        download_path = Path(working_dir, product_name)
+        download_options = self.download_options(entity_id, dataset_name)
+
+        self.logger.info(download_options)
+
+        download_requests = []
+        for option in download_options[0]["secondaryDownloads"]:
+            if option["available"]:
+                download_requests.append(
+                    {
+                        "entityId": option["entityId"],
+                        "productId": option["id"],
+                    }
+                )
+
+        request_results = self.download_request(
+            download_requests,
+            product_name,
+        )
+
+        self.logger.debug(request_results)
+        if len(request_results["availableDownloads"]) == len(download_requests):
+            os.mkdir(download_path)
+            for download in request_results["availableDownloads"]:
+                self.download_file(download_path, None, download["url"])
+
+            return download_path
+
+        max_attempts = 5
+        attempts = 0
+
+        retrieve_results = self.download_retrieve(product_name)
+        self.logger.debug(retrieve_results)
+        while (
+            len(retrieve_results["available"]) != len(download_requests)
+            and attempts < max_attempts
+        ):
+            self.logger.info(
+                f"retrieve results: {len(retrieve_results['available'])}, of {len(download_requests)}"
+            )
+            retrieve_results = self.download_retrieve(product_name)
+            attempts += 1
+            time.sleep(60)
+
+        if len(retrieve_results["available"]) == len(download_requests):
+            os.mkdir(download_path)
+            for download in retrieve_results["available"]:
+                self.download_file(
+                    download_path, download["displayId"], download["url"]
+                )
+            return download_path
+
+        else:
+            self.logger.error(
+                "Unable to download all files. Attempts: {}".format(attempts)
+            )
+            return False
 
 
 def authenticate(self):
