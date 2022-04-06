@@ -897,7 +897,7 @@ class L8Downloader:
             for download in request_results["availableDownloads"]:
                 self.download_file(download_path, None, download["url"])
 
-            return download_path
+            return TaskStatus(True, download_path, None)
 
         max_attempts = 5
         attempts = 0
@@ -921,13 +921,13 @@ class L8Downloader:
                 self.download_file(
                     download_path, download["displayId"], download["url"]
                 )
-            return download_path
+            return TaskStatus(True, download_path, None)
 
         else:
             self.logger.error(
                 "Unable to download all files. Attempts: {}".format(attempts)
             )
-            return False
+            return TaskStatus(False, None, None)
 
 
 def authenticate(self):
